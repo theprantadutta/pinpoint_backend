@@ -27,6 +27,14 @@ class UserResponse(UserBase):
     is_active: bool
     is_premium: bool
 
+    # Firebase/Google authentication fields
+    firebase_uid: Optional[str] = None
+    auth_provider: str
+    google_id: Optional[str] = None
+    display_name: Optional[str] = None
+    photo_url: Optional[str] = None
+    email_verified: bool
+
     class Config:
         from_attributes = True
 
@@ -35,3 +43,26 @@ class UserUpdate(BaseModel):
     """Schema for updating user"""
     email: Optional[EmailStr] = None
     password: Optional[str] = None
+
+
+class FirebaseAuthRequest(BaseModel):
+    """Schema for Firebase token authentication"""
+    firebase_token: str
+
+
+class GoogleAuthRequest(BaseModel):
+    """Schema for Google Sign-In authentication"""
+    firebase_token: str
+
+
+class LinkAccountRequest(BaseModel):
+    """Schema for linking Google account to existing account"""
+    firebase_token: str
+    password: str
+
+
+class AuthProvidersResponse(BaseModel):
+    """Schema for auth providers response"""
+    providers: list[str]  # ['email', 'google']
+    has_password: bool
+    has_google: bool

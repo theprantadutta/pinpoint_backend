@@ -14,7 +14,15 @@ class User(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     email = Column(String(255), unique=True, nullable=False, index=True)
-    password_hash = Column(String(255), nullable=False)
+    password_hash = Column(String(255), nullable=True)  # Nullable for Google-only users
+
+    # Firebase/Google Authentication
+    firebase_uid = Column(String(255), unique=True, nullable=True, index=True)
+    auth_provider = Column(String(50), default="email", nullable=False)  # 'email', 'google', 'firebase'
+    google_id = Column(String(255), unique=True, nullable=True, index=True)
+    display_name = Column(String(255), nullable=True)
+    photo_url = Column(Text, nullable=True)
+    email_verified = Column(Boolean, default=False, nullable=False)
 
     # Profile
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)

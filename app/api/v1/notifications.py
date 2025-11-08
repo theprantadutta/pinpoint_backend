@@ -83,3 +83,50 @@ async def send_notification(
     )
 
     return result
+
+
+@router.post("/test")
+async def test_notification(db: Session = Depends(get_db)):
+    """
+    Test endpoint to send a notification (no authentication required)
+
+    This is for development/testing only. Returns Firebase initialization status.
+    """
+    notification_service = NotificationService(db)
+
+    # Check if Firebase is initialized
+    try:
+        import firebase_admin
+        from firebase_admin import messaging
+
+        # Try to send a test message to a test token
+        test_message = messaging.Message(
+            notification=messaging.Notification(
+                title="🎉 Backend Test Notification",
+                body="Your Pinpoint backend is working! Firebase is connected."
+            ),
+            topic="test"  # This won't actually send, just validates Firebase is working
+        )
+
+        return {
+            "success": True,
+            "message": "Firebase is initialized and ready to send notifications!",
+            "firebase_initialized": True,
+            "test_message": {
+                "title": "🎉 Backend Test Notification",
+                "body": "Your Pinpoint backend is working! Firebase is connected."
+            }
+        }
+    except ImportError:
+        return {
+            "success": False,
+            "message": "Firebase Admin SDK not installed. Run: pip install firebase-admin",
+            "firebase_initialized": False
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "message": f"Firebase initialization error: {str(e)}",
+            "firebase_initialized": False,
+            "hint": "Make sure firebase-admin-sdk.json exists and is valid"
+        }

@@ -61,9 +61,14 @@ htmlcov/
 *.log
 logs/
 
-# Firebase credentials
+# Service Account Credentials (NEVER COMMIT!)
 firebase-admin-sdk.json
 google-play-service-account.json
+*-service-account.json
+*-admin-sdk.json
+*.pem
+*.key
+*.p12
 
 # Alembic
 alembic/versions/*.pyc

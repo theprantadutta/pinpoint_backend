@@ -6,7 +6,7 @@ from app.config import settings
 from app.database import Base
 
 # Import all models to ensure they're registered with Base.metadata
-from app.models import User, EncryptedNote, SyncEvent, SubscriptionEvent, FCMToken
+from app.models import User, EncryptedNote, SyncEvent, SubscriptionEvent, FCMToken, Device
 
 # this is the Alembic Config object
 config = context.config

@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pinpoint Backend - Notification Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .info-box {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+
+        .info-box strong {
+            color: #667eea;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-bottom: 20px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        #result {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .loading {
+            background: #fff3cd;
+            border: 1px solid #ffeeba;
+            color: #856404;
+        }
+
+        pre {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin-top: 10px;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+
+        .status-success {
+            background: #28a745;
+        }
+
+        .status-error {
+            background: #dc3545;
+        }
+
+        .status-loading {
+            background: #ffc107;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .endpoint-info {
+            font-family: monospace;
+            background: #f8f9fa;
+            padding: 5px 10px;
+            border-radius: 5px;
+            display: inline-block;
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔔 Pinpoint Backend Test</h1>
+        <p class="subtitle">Test your notification system</p>
+
+        <div class="info-box">
+            <strong>Endpoint:</strong> <span class="endpoint-info">POST /api/v1/notifications/test</span><br>
+            <strong>Backend URL:</strong> <span id="backendUrl" class="endpoint-info">http://localhost:8000</span>
+        </div>
+
+        <button id="testBtn" onclick="testNotification()">
+            🚀 Test Notification System
+        </button>
+
+        <div id="result"></div>
+    </div>
+
+    <script>
+        const BASE_URL = 'http://localhost:8000';
+
+        async function testNotification() {
+            const resultDiv = document.getElementById('result');
+            const testBtn = document.getElementById('testBtn');
+
+            // Show loading state
+            resultDiv.className = 'loading';
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<span class="status-indicator status-loading"></span> Testing notification system...';
+            testBtn.disabled = true;
+
+            try {
+                const response = await fetch(`${BASE_URL}/api/v1/notifications/test`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    // Success
+                    resultDiv.className = 'success';
+                    resultDiv.innerHTML = `
+                        <span class="status-indicator status-success"></span>
+                        <strong>✅ SUCCESS!</strong><br><br>
+                        ${data.message}<br><br>
+                        <strong>Test Message:</strong><br>
+                        📱 Title: ${data.test_message.title}<br>
+                        💬 Body: ${data.test_message.body}<br><br>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    // Failed
+                    resultDiv.className = 'error';
+                    resultDiv.innerHTML = `
+                        <span class="status-indicator status-error"></span>
+                        <strong>❌ FAILED</strong><br><br>
+                        ${data.message}<br>
+                        ${data.hint ? `<br><strong>Hint:</strong> ${data.hint}` : ''}
+                        <br><br>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                // Connection error
+                resultDiv.className = 'error';
+                resultDiv.innerHTML = `
+                    <span class="status-indicator status-error"></span>
+                    <strong>❌ CONNECTION ERROR</strong><br><br>
+                    Could not connect to backend at <code>${BASE_URL}</code><br><br>
+                    <strong>Possible reasons:</strong>
+                    <ul style="margin-top: 10px; margin-left: 20px;">
+                        <li>Backend is not running</li>
+                        <li>Backend is running on a different port</li>
+                        <li>CORS is blocking the request</li>
+                    </ul>
+                    <br>
+                    <strong>Error:</strong> ${error.message}
+                `;
+            } finally {
+                testBtn.disabled = false;
+            }
+        }
+
+        // Auto-detect backend URL if running on different port
+        if (window.location.hostname !== 'localhost') {
+            document.getElementById('backendUrl').textContent =
+                `http://${window.location.hostname}:8000`;
+        }
+    </script>
+</body>
+</html>

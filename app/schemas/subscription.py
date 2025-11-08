@@ -10,6 +10,13 @@ class GooglePlayPurchaseVerify(BaseModel):
     product_id: str  # e.g., 'pinpoint_premium_monthly'
 
 
+class DeviceBasedPurchaseVerify(BaseModel):
+    """Schema for device-based purchase verification (no authentication)"""
+    device_id: str
+    purchase_token: str
+    product_id: str
+
+
 class SubscriptionStatusResponse(BaseModel):
     """Schema for subscription status response"""
     is_premium: bool

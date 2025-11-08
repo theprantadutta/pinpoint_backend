@@ -25,7 +25,7 @@ class EncryptedNote(Base):
     encrypted_data = Column(LargeBinary, nullable=False)
 
     # Non-sensitive metadata (not encrypted)
-    metadata = Column(JSONB, nullable=True)  # {"type": "text", "has_audio": false, etc}
+    note_metadata = Column(JSONB, nullable=True)  # {"type": "text", "has_audio": false, etc}
 
     # Versioning for conflict resolution
     version = Column(Integer, default=1, nullable=False)

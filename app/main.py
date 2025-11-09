@@ -1,6 +1,9 @@
 """
 Pinpoint Backend API - Main Application
 """
+import os
+import sys
+from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
@@ -31,6 +34,37 @@ app.add_middleware(
 async def startup_event():
     """Initialize database on startup"""
     print("🚀 Starting Pinpoint API...")
+
+    # Check for required configuration files
+    print("🔍 Checking required configuration files...")
+
+    required_files = {
+        ".env": ".env file (contains database and API configuration)",
+        settings.FCM_CREDENTIALS_PATH: "Firebase Admin SDK credentials (required for authentication)"
+    }
+
+    missing_files = []
+    for file_path, description in required_files.items():
+        if not os.path.exists(file_path):
+            missing_files.append(f"  ❌ {file_path} - {description}")
+            print(f"❌ Missing: {file_path}")
+        else:
+            print(f"✅ Found: {file_path}")
+
+    if missing_files:
+        error_msg = "\n\n" + "="*70 + "\n"
+        error_msg += "❌ CONFIGURATION ERROR: Required files are missing!\n"
+        error_msg += "="*70 + "\n\n"
+        error_msg += "Missing files:\n"
+        error_msg += "\n".join(missing_files)
+        error_msg += "\n\n"
+        error_msg += "Please ensure all required files are present before starting the server.\n"
+        error_msg += "See CREDENTIALS_SETUP_GUIDE.md for instructions.\n"
+        error_msg += "="*70 + "\n"
+
+        print(error_msg, file=sys.stderr)
+        sys.exit(1)
+
     print(f"📊 Database: {settings.DATABASE_HOST}:{settings.DATABASE_PORT}/{settings.DATABASE_NAME}")
     print(f"🔧 Debug mode: {settings.DEBUG}")
 
@@ -40,6 +74,7 @@ async def startup_event():
         print("✅ Database initialized successfully")
     except Exception as e:
         print(f"❌ Database initialization failed: {e}")
+        sys.exit(1)
 
 
 @app.on_event("shutdown")

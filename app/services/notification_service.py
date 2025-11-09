@@ -22,10 +22,21 @@ class NotificationService:
                 if not firebase_admin._apps:
                     cred = credentials.Certificate(settings.FCM_CREDENTIALS_PATH)
                     self.firebase_app = firebase_admin.initialize_app(cred)
+                    print(f"✅ Firebase Admin SDK initialized successfully")
                 else:
                     self.firebase_app = firebase_admin.get_app()
+                    print(f"✅ Using existing Firebase Admin SDK instance")
             except Exception as e:
-                print(f"Warning: Could not initialize Firebase: {e}")
+                print(f"❌ Error: Could not initialize Firebase Admin SDK: {e}")
+                raise RuntimeError(f"Firebase initialization failed: {e}")
+        else:
+            print(f"❌ Warning: Firebase credentials not found at {settings.FCM_CREDENTIALS_PATH}")
+            print(f"⚠️  Push notifications and Firebase authentication will not work!")
+            raise FileNotFoundError(
+                f"Firebase Admin SDK credentials file not found: {settings.FCM_CREDENTIALS_PATH}\n"
+                f"Please download credentials from Firebase Console and place at the specified path.\n"
+                f"See CREDENTIALS_SETUP_GUIDE.md for instructions."
+            )
 
     async def register_fcm_token(
         self,

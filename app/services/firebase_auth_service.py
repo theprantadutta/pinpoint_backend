@@ -1,10 +1,38 @@
 """Firebase Authentication Service"""
 import firebase_admin
-from firebase_admin import auth
+from firebase_admin import auth, credentials
 from typing import Dict, Optional
 import logging
+import os
+from app.config import settings
 
 logger = logging.getLogger(__name__)
+
+
+def _ensure_firebase_initialized():
+    """
+    Ensure Firebase Admin SDK is initialized before use
+    Raises RuntimeError if not initialized
+    """
+    if not firebase_admin._apps:
+        # Try to initialize if credentials exist
+        if os.path.exists(settings.FCM_CREDENTIALS_PATH):
+            try:
+                cred = credentials.Certificate(settings.FCM_CREDENTIALS_PATH)
+                firebase_admin.initialize_app(cred)
+                logger.info("Firebase Admin SDK initialized successfully")
+            except Exception as e:
+                logger.error(f"Failed to initialize Firebase Admin SDK: {e}")
+                raise RuntimeError(
+                    f"Firebase Admin SDK initialization failed: {e}\n"
+                    f"Check that {settings.FCM_CREDENTIALS_PATH} is valid."
+                )
+        else:
+            raise RuntimeError(
+                f"Firebase Admin SDK not initialized and credentials file not found: {settings.FCM_CREDENTIALS_PATH}\n"
+                f"Please download credentials from Firebase Console.\n"
+                f"See CREDENTIALS_SETUP_GUIDE.md for instructions."
+            )
 
 
 def verify_firebase_token(id_token: str) -> Optional[Dict]:
@@ -19,7 +47,11 @@ def verify_firebase_token(id_token: str) -> Optional[Dict]:
 
     Raises:
         ValueError: If token is invalid
+        RuntimeError: If Firebase Admin SDK not initialized
     """
+    # Ensure Firebase is initialized
+    _ensure_firebase_initialized()
+
     try:
         # Verify the ID token
         decoded_token = auth.verify_id_token(id_token)
@@ -77,6 +109,8 @@ def get_firebase_user_by_uid(firebase_uid: str) -> Optional[auth.UserRecord]:
     Returns:
         UserRecord or None if not found
     """
+    _ensure_firebase_initialized()
+
     try:
         user = auth.get_user(firebase_uid)
         return user
@@ -98,6 +132,8 @@ def get_firebase_user_by_email(email: str) -> Optional[auth.UserRecord]:
     Returns:
         UserRecord or None if not found
     """
+    _ensure_firebase_initialized()
+
     try:
         user = auth.get_user_by_email(email)
         return user

@@ -49,6 +49,11 @@ class Settings(BaseSettings):
     # Firebase Cloud Messaging
     FCM_CREDENTIALS_PATH: str = "firebase-admin-sdk.json"
 
+    # Firebase Authentication
+    FIREBASE_PROJECT_ID: str
+    FIREBASE_AUTH_ENABLED: bool = False
+    GOOGLE_WEB_CLIENT_ID: str
+
     # Google Play
     GOOGLE_PLAY_SERVICE_ACCOUNT_PATH: str = "google-play-service-account.json"
     GOOGLE_PLAY_PACKAGE_NAME: str = "com.pinpoint.app"

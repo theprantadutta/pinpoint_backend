@@ -38,27 +38,39 @@ async def authenticate_with_firebase(
     - **firebase_token**: Firebase ID token from client
     """
     try:
+        logger.info("🔐 [Firebase Auth] Starting Firebase authentication...")
+        logger.debug(f"Token preview: {request.firebase_token[:50]}...")
+
         # Verify Firebase token
+        logger.info("🔐 [Firebase Auth] Step 1: Verifying Firebase token...")
         decoded_token = verify_firebase_token(request.firebase_token)
+        logger.info(f"✅ [Firebase Auth] Token verified for UID: {decoded_token.get('uid')}")
+
+        logger.info("🔐 [Firebase Auth] Step 2: Extracting user info from token...")
         user_info = get_user_info_from_token(decoded_token)
+        logger.info(f"✅ [Firebase Auth] User info extracted: {user_info.get('email')}")
 
         auth_service = AuthService(db)
 
         # Check if user exists by Firebase UID
+        logger.info(f"🔐 [Firebase Auth] Step 3: Checking if user exists (UID: {user_info['firebase_uid']})...")
         user = db.query(User).filter(User.firebase_uid == user_info['firebase_uid']).first()
 
         if user:
             # Existing Firebase user - update last login
+            logger.info(f"✅ [Firebase Auth] Found existing user: {user.email}")
             user.last_login = datetime.utcnow()
             db.commit()
             db.refresh(user)
         else:
+            logger.info("🔐 [Firebase Auth] User not found by UID, checking by email...")
             # Check if user exists by email (for account linking scenario)
             user = auth_service.get_user_by_email(user_info['email'])
 
             if user:
                 # Email exists but no Firebase UID - this is a conflict
                 # User needs to use account linking endpoint with password
+                logger.warning(f"⚠️ [Firebase Auth] Email exists but not linked: {user_info['email']}")
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
                     detail={
@@ -69,6 +81,7 @@ async def authenticate_with_firebase(
                 )
 
             # Create new user with Firebase auth
+            logger.info(f"🔐 [Firebase Auth] Creating new user: {user_info['email']}")
             user = User(
                 email=user_info['email'],
                 firebase_uid=user_info['firebase_uid'],
@@ -85,10 +98,12 @@ async def authenticate_with_firebase(
             db.add(user)
             db.commit()
             db.refresh(user)
-            logger.info(f"Created new Firebase user: {user.email}")
+            logger.info(f"✅ [Firebase Auth] Created new Firebase user: {user.email}")
 
         # Create backend JWT token
+        logger.info("🔐 [Firebase Auth] Step 4: Creating JWT token...")
         access_token = auth_service.create_access_token_for_user(user)
+        logger.info(f"🎉 [Firebase Auth] Authentication successful for user: {user.email}")
 
         return {
             "access_token": access_token,
@@ -98,15 +113,28 @@ async def authenticate_with_firebase(
 
     except ValueError as e:
         # Firebase token verification failed
+        logger.error(f"❌ [Firebase Auth] ValueError: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=f"Invalid Firebase token: {str(e)}"
         )
-    except Exception as e:
-        logger.error(f"Firebase authentication error: {e}")
+    except RuntimeError as e:
+        # Firebase SDK not initialized
+        logger.error(f"❌ [Firebase Auth] RuntimeError: {str(e)}")
+        logger.error("Firebase Admin SDK is not initialized! Check firebase-admin-sdk.json file.")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Authentication failed"
+            detail=f"Firebase initialization error: {str(e)}"
+        )
+    except HTTPException:
+        # Re-raise HTTP exceptions (like 409 conflict)
+        raise
+    except Exception as e:
+        logger.error(f"❌ [Firebase Auth] Unexpected error: {type(e).__name__}: {str(e)}")
+        logger.exception("Full traceback:")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Authentication failed: {type(e).__name__}: {str(e)}"
         )
 
 

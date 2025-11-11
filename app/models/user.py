@@ -52,10 +52,20 @@ class User(Base):
         if self.subscription_tier == "free":
             return False
 
-        if self.subscription_expires_at is None:
-            return self.subscription_tier in ["premium", "lifetime"]
+        # Lifetime subscriptions never expire
+        if self.subscription_tier == "lifetime":
+            return True
 
-        return datetime.utcnow() < self.subscription_expires_at
+        # For premium/premium_yearly, check expiration
+        if self.subscription_tier in ["premium", "premium_yearly"]:
+            # If no expiration date set, treat as lifetime (shouldn't happen, but handle gracefully)
+            if self.subscription_expires_at is None:
+                return True
+            # Check if subscription hasn't expired
+            return datetime.utcnow() < self.subscription_expires_at
+
+        # Unknown tier, treat as not premium
+        return False
 
     def __repr__(self):
         return f"<User(id={self.id}, email={self.email}, tier={self.subscription_tier})>"

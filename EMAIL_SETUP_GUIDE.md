@@ -42,7 +42,7 @@ SMTP_PORT=587
 SMTP_USER=prantadutta1997@gmail.com
 SMTP_PASSWORD=your_16_char_app_password_here  # Replace DUMMY_PASSWORD_REPLACE_ME with the app password
 SMTP_FROM_EMAIL=prantadutta1997@gmail.com
-SMTP_FROM_NAME=Prant Dutta
+SMTP_FROM_NAME=Pranta Dutta
 ```
 
 **Important**: Remove spaces from the app password. If Gmail gives you `abcd efgh ijkl mnop`, use `abcdefghijklmnop`
@@ -303,7 +303,7 @@ SMTP_PORT=587
 SMTP_USER=prantadutta1997@gmail.com
 SMTP_PASSWORD=<your_gmail_app_password>
 SMTP_FROM_EMAIL=prantadutta1997@gmail.com
-SMTP_FROM_NAME=Prant Dutta
+SMTP_FROM_NAME=Pranta Dutta
 
 # RevenueCat
 REVENUECAT_WEBHOOK_SECRET=<your_webhook_secret>
@@ -365,5 +365,5 @@ Part of Pinpoint project - Private use only
 
 ---
 
-**Created by:** Prant Dutta
+**Created by:** Pranta Dutta
 **Last Updated:** 2025-01-11

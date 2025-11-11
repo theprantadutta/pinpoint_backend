@@ -15,7 +15,7 @@ from app.models.user import User
 from app.models.device import Device
 from app.models.subscription import SubscriptionEvent
 from app.services.email_service import EmailService
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
 
 logger = logging.getLogger(__name__)
@@ -184,13 +184,19 @@ async def sync_revenuecat_purchase(
             expires_at = None
         elif "yearly" in product_id_lower or "annual" in product_id_lower:
             tier = "premium_yearly"
+            # Use provided expiration or default to 1 year if not provided
             expires_at = sync_data.expires_at
+            if expires_at is None:
+                expires_at = datetime.utcnow() + timedelta(days=365)
         elif "lifetime" in product_id_lower:
             tier = "lifetime"
             expires_at = None
         else:
             tier = "premium"
+            # Use provided expiration or default to 1 month if not provided
             expires_at = sync_data.expires_at
+            if expires_at is None:
+                expires_at = datetime.utcnow() + timedelta(days=30)
 
         # Check if this is a new purchase (user was not premium before)
         was_premium = user.subscription_tier not in ["free", None]

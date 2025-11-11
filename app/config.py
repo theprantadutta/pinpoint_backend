@@ -58,6 +58,18 @@ class Settings(BaseSettings):
     GOOGLE_PLAY_SERVICE_ACCOUNT_PATH: str = "google-play-service-account.json"
     GOOGLE_PLAY_PACKAGE_NAME: str = "com.pinpoint.app"
 
+    # Email Configuration
+    SMTP_HOST: str = "smtp.gmail.com"
+    SMTP_PORT: int = 587
+    SMTP_USER: str
+    SMTP_PASSWORD: str
+    SMTP_FROM_EMAIL: str
+    SMTP_FROM_NAME: str = "Pinpoint"
+
+    # RevenueCat
+    REVENUECAT_WEBHOOK_SECRET: str = ""
+    REVENUECAT_WEBHOOK_AUTH_TOKEN: str = ""  # Optional Authorization header for webhooks
+
     # Server
     HOST: str = "0.0.0.0"
     PORT: int = 8000

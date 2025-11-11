@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to Pinpoint Premium</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 40px auto;
+            background-color: #ffffff;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px 20px;
+            text-align: center;
+        }
+        .logo {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            color: #ffffff;
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        .header p {
+            color: #e0e7ff;
+            margin: 10px 0 0 0;
+            font-size: 16px;
+        }
+        .content {
+            padding: 40px 30px;
+        }
+        .greeting {
+            font-size: 20px;
+            color: #1f2937;
+            margin-bottom: 20px;
+        }
+        .message {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #4b5563;
+            margin-bottom: 30px;
+        }
+        .premium-badge {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            color: #ffffff;
+            padding: 12px 24px;
+            border-radius: 30px;
+            display: inline-block;
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .features {
+            background-color: #f9fafb;
+            border-radius: 12px;
+            padding: 30px;
+            margin: 30px 0;
+        }
+        .features h2 {
+            color: #1f2937;
+            font-size: 20px;
+            margin: 0 0 20px 0;
+        }
+        .feature-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .feature-item {
+            padding: 12px 0;
+            color: #4b5563;
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+        }
+        .feature-item::before {
+            content: "✓";
+            color: #10b981;
+            font-weight: bold;
+            font-size: 20px;
+            margin-right: 12px;
+            background-color: #d1fae5;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .expiry-info {
+            background-color: #eff6ff;
+            border-left: 4px solid #3b82f6;
+            padding: 16px 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        .expiry-info p {
+            margin: 0;
+            color: #1e40af;
+            font-size: 14px;
+        }
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #ffffff;
+            text-decoration: none;
+            padding: 16px 40px;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 16px;
+            margin: 20px 0;
+            transition: transform 0.2s;
+        }
+        .cta-button:hover {
+            transform: translateY(-2px);
+        }
+        .footer {
+            background-color: #f9fafb;
+            padding: 30px;
+            text-align: center;
+            border-top: 1px solid #e5e7eb;
+        }
+        .footer p {
+            margin: 5px 0;
+            color: #6b7280;
+            font-size: 14px;
+        }
+        .footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+        .social-links {
+            margin-top: 20px;
+        }
+        .social-links a {
+            display: inline-block;
+            margin: 0 10px;
+            color: #9ca3af;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        @media only screen and (max-width: 600px) {
+            .email-container {
+                margin: 20px;
+            }
+            .content {
+                padding: 30px 20px;
+            }
+            .features {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <!-- Header -->
+        <div class="header">
+            <img src="cid:logo" alt="Pinpoint Logo" class="logo" />
+            <h1>🎉 Welcome to Premium!</h1>
+            <p>Thank you for joining Pinpoint Premium</p>
+        </div>
+
+        <!-- Content -->
+        <div class="content">
+            <div class="greeting">
+                Hello {{ user_name }}! 👋
+            </div>
+
+            <div class="premium-badge">
+                ✨ {{ subscription_type }}
+            </div>
+
+            <div class="message">
+                <p>We're thrilled to have you as a premium member! Your support helps us continue building amazing features and keeping Pinpoint ad-free and privacy-focused.</p>
+
+                <p>You now have unlimited access to all premium features. Here's what you can do:</p>
+            </div>
+
+            <!-- Premium Features -->
+            <div class="features">
+                <h2>Your Premium Benefits</h2>
+                <ul class="feature-list">
+                    <li class="feature-item">Unlimited Cloud Sync across all devices</li>
+                    <li class="feature-item">Unlimited Voice Recording (no time limits)</li>
+                    <li class="feature-item">Unlimited OCR Scans from images</li>
+                    <li class="feature-item">All 5 Premium Theme Colors</li>
+                    <li class="feature-item">Export to PDF and Markdown (unlimited)</li>
+                    <li class="feature-item">Unlimited File Attachments</li>
+                    <li class="feature-item">Unlimited Folders for organization</li>
+                    <li class="feature-item">Priority Email Support</li>
+                </ul>
+            </div>
+
+            <!-- Expiry Info -->
+            <div class="expiry-info">
+                <p><strong>📅 Subscription Details:</strong> {{ expiry_text }}</p>
+            </div>
+
+            <div class="message">
+                <p>If you have any questions or need help getting started with premium features, just reply to this email. We're here to help!</p>
+            </div>
+
+            <!-- CTA Button -->
+            <center>
+                <a href="pinpoint://app/home" class="cta-button">Open Pinpoint App</a>
+            </center>
+
+            <div class="message" style="margin-top: 30px; padding-top: 30px; border-top: 1px solid #e5e7eb;">
+                <p style="font-size: 14px; color: #6b7280;">
+                    <strong>Need help?</strong> Reply to this email or contact us at
+                    <a href="mailto:prantadutta1997@gmail.com" style="color: #667eea;">prantadutta1997@gmail.com</a>
+                </p>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p><strong>Pinpoint</strong> - Your Private Note-Taking App</p>
+            <p>Made with ❤️ by Prant Dutta</p>
+            <p style="margin-top: 15px; font-size: 12px;">
+                © {{ current_year }} Pinpoint. All rights reserved.
+            </p>
+            <div class="social-links">
+                <a href="#">Privacy Policy</a> •
+                <a href="#">Terms of Service</a> •
+                <a href="#">Contact Us</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

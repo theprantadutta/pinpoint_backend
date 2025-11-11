@@ -31,3 +31,12 @@ class PurchaseVerificationResponse(BaseModel):
     tier: str
     expires_at: Optional[datetime] = None
     message: str
+
+
+class RevenueCatSyncRequest(BaseModel):
+    """Schema for RevenueCat client-side sync"""
+    firebase_uid: Optional[str] = None
+    email: Optional[str] = None
+    product_id: str
+    is_premium: bool
+    expires_at: Optional[datetime] = None

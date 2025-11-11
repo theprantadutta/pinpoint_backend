@@ -32,6 +32,7 @@ class User(Base):
     # Subscription
     subscription_tier = Column(String(50), default="free", nullable=False)
     subscription_expires_at = Column(DateTime, nullable=True)
+    grace_period_ends_at = Column(DateTime, nullable=True)
     google_play_purchase_token = Column(String(500), nullable=True)
 
     # Device info
@@ -48,7 +49,11 @@ class User(Base):
 
     @property
     def is_premium(self) -> bool:
-        """Check if user has active premium subscription"""
+        """Check if user has active premium subscription or in grace period"""
+        # Check if in grace period first
+        if self.is_in_grace_period():
+            return True
+
         if self.subscription_tier == "free":
             return False
 
@@ -66,6 +71,35 @@ class User(Base):
 
         # Unknown tier, treat as not premium
         return False
+
+    def is_in_grace_period(self) -> bool:
+        """Check if user is currently in grace period"""
+        if self.grace_period_ends_at is None:
+            return False
+        return datetime.utcnow() < self.grace_period_ends_at
+
+    def start_grace_period(self, days: int = 3):
+        """Start grace period for user"""
+        from datetime import timedelta
+        self.grace_period_ends_at = datetime.utcnow() + timedelta(days=days)
+
+    def clear_grace_period(self):
+        """Clear grace period (e.g., when payment succeeds)"""
+        self.grace_period_ends_at = None
+
+    def get_subscription_status(self) -> str:
+        """Get detailed subscription status"""
+        if self.is_in_grace_period():
+            return "grace_period"
+        elif self.is_premium:
+            if self.subscription_tier == "lifetime":
+                return "active_lifetime"
+            return "active"
+        elif self.subscription_expires_at and datetime.utcnow() < self.subscription_expires_at:
+            # Within free trial period
+            return "trial"
+        else:
+            return "expired"
 
     def __repr__(self):
         return f"<User(id={self.id}, email={self.email}, tier={self.subscription_tier})>"

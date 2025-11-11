@@ -165,13 +165,13 @@ class PaymentService:
 
     def get_subscription_status(self, user_id: str) -> Dict:
         """
-        Get current subscription status for a user
+        Get current subscription status for a user including grace period
 
         Args:
             user_id: User ID
 
         Returns:
-            Dictionary with subscription status
+            Dictionary with subscription status including grace period info
         """
         user = self.db.query(User).filter(User.id == user_id).first()
 
@@ -180,7 +180,10 @@ class PaymentService:
                 "is_premium": False,
                 "tier": "free",
                 "expires_at": None,
-                "product_id": None
+                "product_id": None,
+                "is_in_grace_period": False,
+                "grace_period_ends_at": None,
+                "subscription_status": "expired"
             }
 
         # Get latest subscription event
@@ -192,7 +195,10 @@ class PaymentService:
             "is_premium": user.is_premium,
             "tier": user.subscription_tier,
             "expires_at": user.subscription_expires_at,
-            "product_id": latest_event.product_id if latest_event else None
+            "product_id": latest_event.product_id if latest_event else None,
+            "is_in_grace_period": user.is_in_grace_period(),
+            "grace_period_ends_at": user.grace_period_ends_at,
+            "subscription_status": user.get_subscription_status()
         }
 
     async def verify_google_play_purchase_for_device(

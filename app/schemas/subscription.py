@@ -23,6 +23,9 @@ class SubscriptionStatusResponse(BaseModel):
     tier: str
     expires_at: Optional[datetime] = None
     product_id: Optional[str] = None
+    is_in_grace_period: bool = False
+    grace_period_ends_at: Optional[datetime] = None
+    subscription_status: Optional[str] = None  # 'active', 'trial', 'grace_period', 'expired'
 
 
 class PurchaseVerificationResponse(BaseModel):
@@ -30,13 +33,5 @@ class PurchaseVerificationResponse(BaseModel):
     success: bool
     tier: str
     expires_at: Optional[datetime] = None
+    is_in_grace_period: bool = False
     message: str
-
-
-class RevenueCatSyncRequest(BaseModel):
-    """Schema for RevenueCat client-side sync"""
-    firebase_uid: Optional[str] = None
-    email: Optional[str] = None
-    product_id: str
-    is_premium: bool
-    expires_at: Optional[datetime] = None

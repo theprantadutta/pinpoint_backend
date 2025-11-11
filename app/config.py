@@ -66,9 +66,9 @@ class Settings(BaseSettings):
     SMTP_FROM_EMAIL: str
     SMTP_FROM_NAME: str = "Pinpoint"
 
-    # RevenueCat
-    REVENUECAT_WEBHOOK_SECRET: str = ""
-    REVENUECAT_WEBHOOK_AUTH_TOKEN: str = ""  # Optional Authorization header for webhooks
+    # Subscription Settings
+    GRACE_PERIOD_DAYS: int = 3  # Grace period after payment failure
+    TRIAL_PERIOD_DAYS: int = 7  # Free trial period
 
     # Server
     HOST: str = "0.0.0.0"

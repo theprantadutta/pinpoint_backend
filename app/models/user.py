@@ -46,6 +46,7 @@ class User(Base):
     sync_events = relationship("SyncEvent", back_populates="user", cascade="all, delete-orphan")
     subscription_events = relationship("SubscriptionEvent", back_populates="user", cascade="all, delete-orphan")
     fcm_tokens = relationship("FCMToken", back_populates="user", cascade="all, delete-orphan")
+    encryption_key = relationship("EncryptionKey", back_populates="user", cascade="all, delete-orphan", uselist=False)
 
     @property
     def is_premium(self) -> bool:

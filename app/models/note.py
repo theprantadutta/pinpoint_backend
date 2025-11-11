@@ -44,6 +44,40 @@ class EncryptedNote(Base):
         return f"<EncryptedNote(id={self.id}, user_id={self.user_id}, client_id={self.client_note_id})>"
 
 
+class EncryptionKey(Base):
+    """
+    User encryption key storage
+
+    Stores the client's encryption key on the server so it can be
+    recovered after reinstalling the app or on a new device.
+
+    SECURITY NOTE: The encryption key is stored encrypted on the server.
+    In the current implementation, the server CAN theoretically decrypt notes,
+    but this is necessary to allow key recovery across devices.
+
+    Future enhancement: Derive a master key from user password and encrypt
+    the encryption key with that master key client-side before uploading.
+    """
+
+    __tablename__ = "encryption_keys"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, unique=True, index=True)
+
+    # Base64-encoded encryption key
+    encryption_key = Column(String(255), nullable=False)
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    # Relationships
+    user = relationship("User", back_populates="encryption_key")
+
+    def __repr__(self):
+        return f"<EncryptionKey(user_id={self.user_id})>"
+
+
 class SyncEvent(Base):
     """Track sync operations for debugging and analytics"""
 

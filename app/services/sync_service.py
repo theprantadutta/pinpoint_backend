@@ -94,20 +94,45 @@ class SyncService:
                 # TODO: Implement proper version-based conflict resolution
 
                 existing_note.encrypted_data = encrypted_blob
-                existing_note.metadata = note_data.metadata.dict() if note_data.metadata else None
+                existing_note.note_metadata = note_data.metadata.dict() if note_data.metadata else None
                 existing_note.version = note_data.version
-                existing_note.updated_at = datetime.utcnow()
+
+                # IMPORTANT: Preserve client's timestamp from metadata
+                # This ensures timestamps stay consistent across devices
+                if note_data.metadata and note_data.metadata.updated_at:
+                    try:
+                        client_timestamp = datetime.fromisoformat(note_data.metadata.updated_at.replace('Z', '+00:00'))
+                        existing_note.updated_at = client_timestamp
+                    except Exception:
+                        # Fallback to server time if client timestamp is invalid
+                        existing_note.updated_at = datetime.utcnow()
+                else:
+                    existing_note.updated_at = datetime.utcnow()
 
                 updated_notes.append(existing_note)
                 synced_count += 1
             else:
                 # Create new note
+                # Preserve client's timestamp if provided
+                created_at = datetime.utcnow()
+                updated_at = datetime.utcnow()
+
+                if note_data.metadata and note_data.metadata.updated_at:
+                    try:
+                        client_timestamp = datetime.fromisoformat(note_data.metadata.updated_at.replace('Z', '+00:00'))
+                        updated_at = client_timestamp
+                        created_at = client_timestamp
+                    except Exception:
+                        pass  # Use server time
+
                 new_note = EncryptedNote(
                     user_id=user_id,
                     client_note_id=note_data.client_note_id,
                     encrypted_data=encrypted_blob,
-                    metadata=note_data.metadata.dict() if note_data.metadata else None,
-                    version=note_data.version
+                    note_metadata=note_data.metadata.dict() if note_data.metadata else None,
+                    version=note_data.version,
+                    created_at=created_at,
+                    updated_at=updated_at
                 )
 
                 self.db.add(new_note)

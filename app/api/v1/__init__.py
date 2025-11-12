@@ -1,6 +1,6 @@
 """API v1 routes"""
 from fastapi import APIRouter
-from app.api.v1 import auth, auth_firebase, notes, subscription, notifications, encryption, admin
+from app.api.v1 import auth, auth_firebase, notes, subscription, notifications, encryption, admin, usage
 
 api_router = APIRouter()
 
@@ -10,4 +10,5 @@ api_router.include_router(notes.router, prefix="/notes", tags=["notes"])
 api_router.include_router(subscription.router, prefix="/subscription", tags=["subscription"])
 api_router.include_router(notifications.router, prefix="/notifications", tags=["notifications"])
 api_router.include_router(encryption.router, prefix="/encryption", tags=["encryption"])
+api_router.include_router(usage.router, prefix="/usage", tags=["usage"])
 api_router.include_router(admin.router, prefix="/admin", tags=["admin"])

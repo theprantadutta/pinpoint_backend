@@ -1,5 +1,5 @@
 """User model"""
-from sqlalchemy import Column, String, Boolean, DateTime, Text
+from sqlalchemy import Column, String, Boolean, DateTime, Text, Integer, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from datetime import datetime
@@ -47,6 +47,7 @@ class User(Base):
     subscription_events = relationship("SubscriptionEvent", back_populates="user", cascade="all, delete-orphan")
     fcm_tokens = relationship("FCMToken", back_populates="user", cascade="all, delete-orphan")
     encryption_key = relationship("EncryptionKey", back_populates="user", cascade="all, delete-orphan", uselist=False)
+    usage_tracking = relationship("UsageTracking", back_populates="user", cascade="all, delete-orphan", uselist=False)
 
     @property
     def is_premium(self) -> bool:
@@ -104,3 +105,55 @@ class User(Base):
 
     def __repr__(self):
         return f"<User(id={self.id}, email={self.email}, tier={self.subscription_tier})>"
+
+
+class UsageTracking(Base):
+    """
+    Track user usage for rate limiting and premium features
+
+    This model stores counters for various usage metrics to enforce
+    free tier limits and track premium feature usage.
+    """
+
+    __tablename__ = "usage_tracking"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, unique=True, index=True)
+
+    # Permanent counters (never reset)
+    synced_notes_count = Column(Integer, default=0, nullable=False)  # Total notes synced to cloud
+
+    # Monthly counters (reset on 1st of each month)
+    ocr_scans_month = Column(Integer, default=0, nullable=False)  # OCR scans this month
+    exports_month = Column(Integer, default=0, nullable=False)  # Exports (PDF/markdown) this month
+
+    # Monthly reset tracking
+    last_monthly_reset = Column(DateTime, default=datetime.utcnow, nullable=False)  # When monthly counters were last reset
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    # Relationships
+    user = relationship("User", back_populates="usage_tracking")
+
+    def check_and_reset_monthly(self) -> bool:
+        """
+        Check if monthly counters should be reset and reset them if needed.
+        Returns True if reset was performed.
+        """
+        now = datetime.utcnow()
+        last_reset = self.last_monthly_reset
+
+        # Check if we're in a new month
+        if now.year > last_reset.year or now.month > last_reset.month:
+            self.ocr_scans_month = 0
+            self.exports_month = 0
+            self.last_monthly_reset = now
+            self.updated_at = now
+            return True
+
+        return False
+
+    def __repr__(self):
+        return f"<UsageTracking(user_id={self.user_id}, synced_notes={self.synced_notes_count}, ocr={self.ocr_scans_month}, exports={self.exports_month})>"

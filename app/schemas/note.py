@@ -27,7 +27,7 @@ class EncryptedNoteResponse(BaseModel):
     id: UUID4
     client_note_id: int
     encrypted_data: str
-    metadata: Optional[Dict[str, Any]] = None
+    note_metadata: Optional[Dict[str, Any]] = None
     version: int
     created_at: datetime
     updated_at: datetime

@@ -144,6 +144,11 @@ class SyncService:
                 existing_note.note_metadata = note_data.metadata.dict() if note_data.metadata else None
                 existing_note.version = note_data.version
 
+                # IMPORTANT: Update is_deleted column from metadata
+                # This ensures proper filtering and reconciliation
+                if note_data.metadata and note_data.metadata.is_deleted is not None:
+                    existing_note.is_deleted = note_data.metadata.is_deleted
+
                 # IMPORTANT: Preserve client's timestamp from metadata
                 # This ensures timestamps stay consistent across devices
                 if note_data.metadata and note_data.metadata.updated_at:
@@ -172,12 +177,16 @@ class SyncService:
                     except Exception:
                         pass  # Use server time
 
+                # Set is_deleted from metadata
+                is_deleted = note_data.metadata.is_deleted if note_data.metadata and note_data.metadata.is_deleted is not None else False
+
                 new_note = EncryptedNote(
                     user_id=user_id,
                     client_note_id=note_data.client_note_id,
                     encrypted_data=encrypted_blob,
                     note_metadata=note_data.metadata.dict() if note_data.metadata else None,
                     version=note_data.version,
+                    is_deleted=is_deleted,
                     created_at=created_at,
                     updated_at=updated_at
                 )

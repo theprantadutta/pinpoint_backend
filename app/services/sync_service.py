@@ -36,7 +36,7 @@ class SyncService:
 
         # Filter by timestamp for incremental sync
         if since > 0:
-            since_datetime = datetime.fromtimestamp(since)
+            since_datetime = datetime.utcfromtimestamp(since)
             query = query.filter(EncryptedNote.updated_at > since_datetime)
 
         # Optionally exclude deleted notes

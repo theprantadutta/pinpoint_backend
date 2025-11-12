@@ -70,6 +70,11 @@ class Settings(BaseSettings):
     GRACE_PERIOD_DAYS: int = 3  # Grace period after payment failure
     TRIAL_PERIOD_DAYS: int = 7  # Free trial period
 
+    # Admin Panel Configuration
+    ADMIN_EMAIL: str
+    ADMIN_PASSWORD: str
+    ADMIN_JWT_EXPIRE_MINUTES: int = 60  # 1 hour for admin sessions
+
     # Server
     HOST: str = "0.0.0.0"
     PORT: int = 8000

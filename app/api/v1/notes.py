@@ -82,14 +82,14 @@ async def delete_notes(
     """
     Delete notes (soft delete by default)
 
-    - **client_note_ids**: List of note IDs to delete
+    - **client_note_uuids**: List of note UUIDs to delete
     - **hard_delete**: If true, permanently delete. Otherwise soft delete.
     """
     sync_service = SyncService(db)
 
     deleted_count = sync_service.delete_notes(
         user_id=str(current_user.id),
-        client_note_ids=delete_request.client_note_ids,
+        client_note_uuids=delete_request.client_note_uuids,
         hard_delete=hard_delete
     )
 

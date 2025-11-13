@@ -90,7 +90,7 @@ class SyncService:
         for note_data in encrypted_notes:
             existing_note = self.db.query(EncryptedNote).filter(
                 EncryptedNote.user_id == user_id,
-                EncryptedNote.client_note_id == note_data.client_note_id
+                EncryptedNote.client_note_uuid == note_data.client_note_uuid
             ).first()
             if not existing_note and not (note_data.metadata and note_data.metadata.is_deleted):
                 new_notes_count += 1
@@ -119,10 +119,10 @@ class SyncService:
         new_notes_created = 0
 
         for note_data in encrypted_notes:
-            # Check if note exists
+            # Check if note exists by UUID
             existing_note = self.db.query(EncryptedNote).filter(
                 EncryptedNote.user_id == user_id,
-                EncryptedNote.client_note_id == note_data.client_note_id
+                EncryptedNote.client_note_uuid == note_data.client_note_uuid
             ).first()
 
             # Decode base64 encrypted data
@@ -130,7 +130,7 @@ class SyncService:
                 encrypted_blob = base64.b64decode(note_data.encrypted_data)
             except Exception:
                 conflicts.append({
-                    "client_note_id": note_data.client_note_id,
+                    "client_note_uuid": note_data.client_note_uuid,
                     "error": "Invalid base64 encoding"
                 })
                 continue
@@ -182,7 +182,8 @@ class SyncService:
 
                 new_note = EncryptedNote(
                     user_id=user_id,
-                    client_note_id=note_data.client_note_id,
+                    client_note_id=0,  # Keep for migration compatibility, but not used
+                    client_note_uuid=note_data.client_note_uuid,
                     encrypted_data=encrypted_blob,
                     note_metadata=note_data.metadata.dict() if note_data.metadata else None,
                     version=note_data.version,
@@ -250,7 +251,7 @@ class SyncService:
     def delete_notes(
         self,
         user_id: str,
-        client_note_ids: List[int],
+        client_note_uuids: List[str],
         hard_delete: bool = False
     ) -> int:
         """
@@ -258,7 +259,7 @@ class SyncService:
 
         Args:
             user_id: User ID
-            client_note_ids: List of client note IDs to delete
+            client_note_uuids: List of client note UUIDs to delete
             hard_delete: If True, permanently delete. If False, soft delete.
 
         Returns:
@@ -268,7 +269,7 @@ class SyncService:
 
         notes = self.db.query(EncryptedNote).filter(
             EncryptedNote.user_id == user_id,
-            EncryptedNote.client_note_id.in_(client_note_ids)
+            EncryptedNote.client_note_uuid.in_(client_note_uuids)
         )
 
         # Count notes before deletion for usage tracking

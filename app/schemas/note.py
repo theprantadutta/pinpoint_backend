@@ -16,7 +16,7 @@ class NoteMetadata(BaseModel):
 
 class EncryptedNoteCreate(BaseModel):
     """Schema for uploading an encrypted note"""
-    client_note_id: int
+    client_note_uuid: str  # Globally unique identifier from client
     encrypted_data: str  # Base64-encoded encrypted blob
     metadata: Optional[NoteMetadata] = None
     version: int = 1
@@ -25,7 +25,7 @@ class EncryptedNoteCreate(BaseModel):
 class EncryptedNoteResponse(BaseModel):
     """Schema for encrypted note response"""
     id: UUID4
-    client_note_id: int
+    client_note_uuid: str  # Globally unique identifier from client
     encrypted_data: str
     note_metadata: Optional[Dict[str, Any]] = None
     version: int
@@ -53,4 +53,4 @@ class NoteSyncResponse(BaseModel):
 
 class NoteDeleteRequest(BaseModel):
     """Schema for deleting notes"""
-    client_note_ids: List[int]
+    client_note_uuids: List[str]  # UUIDs of notes to delete

@@ -43,6 +43,7 @@ class User(Base):
 
     # Relationships
     notes = relationship("EncryptedNote", back_populates="user", cascade="all, delete-orphan")
+    note_id_migrations = relationship("NoteIdMigration", back_populates="user", cascade="all, delete-orphan")
     sync_events = relationship("SyncEvent", back_populates="user", cascade="all, delete-orphan")
     subscription_events = relationship("SubscriptionEvent", back_populates="user", cascade="all, delete-orphan")
     fcm_tokens = relationship("FCMToken", back_populates="user", cascade="all, delete-orphan")

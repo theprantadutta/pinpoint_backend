@@ -19,7 +19,8 @@ class EncryptedNote(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
-    client_note_id = Column(Integer, nullable=False)  # Local ID from Flutter app
+    client_note_id = Column(Integer, nullable=False)  # Local ID from Flutter app (DEPRECATED - use client_note_uuid)
+    client_note_uuid = Column(String(36), nullable=False)  # UUID from Flutter app (PRIMARY IDENTIFIER)
 
     # Encrypted data (server cannot read this)
     encrypted_data = Column(LargeBinary, nullable=False)
@@ -76,6 +77,30 @@ class EncryptionKey(Base):
 
     def __repr__(self):
         return f"<EncryptionKey(user_id={self.user_id})>"
+
+
+class NoteIdMigration(Base):
+    """
+    Temporary table for migrating from integer IDs to UUIDs
+
+    When a client updates to the UUID-based system, it generates UUIDs for
+    existing notes and uploads the mapping. The server uses this to update
+    the client_note_uuid field for existing encrypted_notes.
+    """
+
+    __tablename__ = "note_id_migration"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    old_client_note_id = Column(Integer, nullable=False)  # Old integer ID
+    new_client_note_uuid = Column(String(36), nullable=False)  # New UUID
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    # Relationships
+    user = relationship("User", back_populates="note_id_migrations")
+
+    def __repr__(self):
+        return f"<NoteIdMigration(user_id={self.user_id}, old_id={self.old_client_note_id}, new_uuid={self.new_client_note_uuid})>"
 
 
 class SyncEvent(Base):

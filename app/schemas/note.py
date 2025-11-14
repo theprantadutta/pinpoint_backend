@@ -16,6 +16,7 @@ class NoteMetadata(BaseModel):
 
 class EncryptedNoteCreate(BaseModel):
     """Schema for uploading an encrypted note"""
+    client_note_id: int  # Client's local database ID
     client_note_uuid: str  # Globally unique identifier from client
     encrypted_data: str  # Base64-encoded encrypted blob
     metadata: Optional[NoteMetadata] = None

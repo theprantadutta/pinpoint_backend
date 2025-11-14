@@ -182,7 +182,7 @@ class SyncService:
 
                 new_note = EncryptedNote(
                     user_id=user_id,
-                    client_note_id=0,  # Keep for migration compatibility, but not used
+                    client_note_id=note_data.client_note_id,  # Use client's DB ID for unique constraint
                     client_note_uuid=note_data.client_note_uuid,
                     encrypted_data=encrypted_blob,
                     note_metadata=note_data.metadata.dict() if note_data.metadata else None,

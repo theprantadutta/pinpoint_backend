@@ -5,7 +5,7 @@ from sqlalchemy.orm import relationship
 from datetime import datetime
 import uuid
 
-from app.database.base_class import Base
+from app.database import Base
 
 
 class Folder(Base):

@@ -1,11 +1,12 @@
 """API v1 routes"""
 from fastapi import APIRouter
-from app.api.v1 import auth, auth_firebase, notes, subscription, notifications, encryption, admin, usage
+from app.api.v1 import auth, auth_firebase, notes, folders, subscription, notifications, encryption, admin, usage
 
 api_router = APIRouter()
 
 api_router.include_router(auth.router, prefix="/auth", tags=["authentication"])
 api_router.include_router(auth_firebase.router, prefix="/auth", tags=["authentication"])  # Firebase auth endpoints
+api_router.include_router(folders.router, prefix="/folders", tags=["folders"])
 api_router.include_router(notes.router, prefix="/notes", tags=["notes"])
 api_router.include_router(subscription.router, prefix="/subscription", tags=["subscription"])
 api_router.include_router(notifications.router, prefix="/notifications", tags=["notifications"])

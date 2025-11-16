@@ -41,8 +41,12 @@ app.add_middleware(
 
 @app.on_event("startup")
 async def startup_event():
-    """Initialize database on startup"""
+    """Initialize database and scheduler on startup"""
     print("🚀 Starting Pinpoint API...")
+
+    # Start reminder scheduler
+    from app.scheduler import start_scheduler
+    start_scheduler()
 
     # Check for required configuration files
     print("🔍 Checking required configuration files...")
@@ -90,6 +94,10 @@ async def startup_event():
 async def shutdown_event():
     """Cleanup on shutdown"""
     print("👋 Shutting down Pinpoint API...")
+
+    # Stop reminder scheduler
+    from app.scheduler import stop_scheduler
+    stop_scheduler()
 
 
 # Health check endpoint

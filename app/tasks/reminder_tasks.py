@@ -1,9 +1,9 @@
-"""Celery tasks for reminder notifications"""
-from celery import shared_task
+"""Tasks for reminder notifications"""
 from sqlalchemy.orm import Session
 from datetime import datetime
 from uuid import UUID
 import logging
+import asyncio
 
 from app.database import SessionLocal
 from app.models.reminder import Reminder
@@ -13,8 +13,7 @@ from app.services.notification_service import NotificationService
 logger = logging.getLogger(__name__)
 
 
-@shared_task(bind=True, max_retries=3)
-def send_reminder_notification(self, reminder_id: str):
+def send_reminder_notification(reminder_id: str):
     """
     Send FCM push notification for a reminder to all user devices
 
@@ -72,9 +71,6 @@ def send_reminder_notification(self, reminder_id: str):
 
         for token in fcm_tokens:
             try:
-                # Import asyncio to run async notification service
-                import asyncio
-
                 # Run the async send_notification method
                 result = asyncio.run(notification_service.send_notification(
                     fcm_token=token.fcm_token,
@@ -116,29 +112,22 @@ def send_reminder_notification(self, reminder_id: str):
         }
 
     except Exception as e:
-        logger.error(f"Error in send_reminder_notification task: {e}")
+        logger.error(f"Error in send_reminder_notification: {e}")
         db.rollback()
-
-        # Retry the task up to 3 times with exponential backoff
-        try:
-            raise self.retry(exc=e, countdown=60 * (2 ** self.request.retries))
-        except self.MaxRetriesExceededError:
-            logger.error(f"Max retries exceeded for reminder {reminder_id}")
-            return {
-                "success": False,
-                "message": f"Failed after {self.max_retries} retries: {str(e)}"
-            }
+        return {
+            "success": False,
+            "message": f"Error: {str(e)}"
+        }
 
     finally:
         db.close()
 
 
-@shared_task
 def check_missed_reminders():
     """
     Periodic task to check for and trigger any missed reminders
 
-    This is a catch-up job that runs every 5 minutes to handle:
+    This runs every 5 minutes to handle:
     - Reminders that failed to schedule
     - Reminders during server downtime
     - Any other edge cases
@@ -161,25 +150,22 @@ def check_missed_reminders():
 
         for reminder in missed_reminders:
             try:
-                # Trigger the reminder notification task immediately
-                send_reminder_notification.apply_async(
-                    args=[str(reminder.id)],
-                    countdown=0  # Send immediately
-                )
+                # Trigger the reminder immediately
+                send_reminder_notification(str(reminder.id))
                 triggered_count += 1
-                logger.info(f"Queued missed reminder {reminder.id}")
+                logger.info(f"Sent missed reminder {reminder.id}")
 
             except Exception as e:
-                logger.error(f"Failed to queue missed reminder {reminder.id}: {e}")
+                logger.error(f"Failed to send missed reminder {reminder.id}: {e}")
 
         return {
             "success": True,
             "triggered_count": triggered_count,
-            "message": f"Queued {triggered_count} missed reminders"
+            "message": f"Sent {triggered_count} missed reminders"
         }
 
     except Exception as e:
-        logger.error(f"Error in check_missed_reminders task: {e}")
+        logger.error(f"Error in check_missed_reminders: {e}")
         return {
             "success": False,
             "message": f"Error: {str(e)}"

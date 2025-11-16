@@ -297,50 +297,41 @@ class ReminderService:
     # Celery task management methods
     async def _schedule_reminder_task(self, reminder: Reminder) -> str:
         """
-        Schedule Celery task for reminder
+        Schedule reminder task using APScheduler
 
         Returns:
-            Celery task ID
+            Job ID
         """
         try:
-            from app.tasks.reminder_tasks import send_reminder_notification
-
-            # Calculate countdown in seconds until reminder time
-            now = datetime.utcnow()
-            countdown = (reminder.reminder_time - now).total_seconds()
-
-            # Don't schedule tasks in the past
-            if countdown < 0:
-                logger.warning(f"Reminder {reminder.id} is in the past, scheduling immediately")
-                countdown = 0
+            from app.scheduler import schedule_reminder
 
             # Schedule the task
-            result = send_reminder_notification.apply_async(
-                args=[str(reminder.id)],
-                eta=reminder.reminder_time  # Execute at exact time
+            job_id = schedule_reminder(
+                reminder_id=str(reminder.id),
+                reminder_time=reminder.reminder_time
             )
 
-            logger.info(f"Scheduled Celery task {result.id} for reminder {reminder.id} at {reminder.reminder_time}")
-            return result.id
+            logger.info(f"Scheduled reminder {reminder.id} at {reminder.reminder_time}")
+            return job_id
 
         except Exception as e:
-            logger.error(f"Failed to schedule Celery task for reminder {reminder.id}: {e}")
+            logger.error(f"Failed to schedule reminder {reminder.id}: {e}")
             raise
 
     async def _cancel_reminder_task(self, task_id: str):
         """
-        Cancel scheduled Celery task
+        Cancel scheduled reminder task
 
         Args:
-            task_id: Celery task ID to cancel
+            task_id: Job ID to cancel
         """
         try:
-            from celery_app import celery_app
+            from app.scheduler import cancel_reminder
 
-            # Revoke the task
-            celery_app.control.revoke(task_id, terminate=True)
-            logger.info(f"Cancelled Celery task {task_id}")
+            # Cancel the job
+            cancel_reminder(task_id)
+            logger.info(f"Cancelled reminder job {task_id}")
 
         except Exception as e:
-            logger.error(f"Failed to cancel Celery task {task_id}: {e}")
+            logger.error(f"Failed to cancel reminder job {task_id}: {e}")
             raise

@@ -21,19 +21,19 @@ services:
   # Backend API
   backend:
     build: .
-    ports:
-      - "84:8000"
+    network_mode: host
     env_file:
       - .env
     restart: unless-stopped
     volumes:
       - ./app:/app/app  # Mount app directory for hot reload
       - ./alembic:/app/alembic  # Mount alembic for migrations
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    command: uvicorn app.main:app --host 0.0.0.0 --port 84 --reload
 
   # Celery Worker (processes reminder notification tasks)
   celery-worker:
     build: .
+    network_mode: host
     env_file:
       - .env
     depends_on:
@@ -48,6 +48,7 @@ services:
   # Celery Beat (schedules periodic tasks like missed reminders check)
   celery-beat:
     build: .
+    network_mode: host
     env_file:
       - .env
     depends_on:

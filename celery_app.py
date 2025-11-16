@@ -18,6 +18,11 @@ celery_app.conf.update(
     timezone="UTC",
     enable_utc=True,
 
+    # Broker connection settings
+    broker_connection_retry_on_startup=True,
+    broker_connection_retry=True,
+    broker_connection_max_retries=10,
+
     # Task settings
     task_serializer="json",
     accept_content=["json"],

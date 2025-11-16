@@ -44,8 +44,7 @@ class Settings(BaseSettings):
         return [origin.strip() for origin in self.ALLOWED_ORIGINS.split(",")]
 
     # Redis (for Celery task queue)
-    REDIS_PASSWORD: str = ""
-    REDIS_URL: str = "redis://localhost:6379"
+    REDIS_URL: str = "redis://redis:6379/0"
 
     # Firebase Cloud Messaging
     FCM_CREDENTIALS_PATH: str = "firebase-admin-sdk.json"

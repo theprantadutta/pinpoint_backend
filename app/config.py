@@ -43,7 +43,8 @@ class Settings(BaseSettings):
             return ["*"]
         return [origin.strip() for origin in self.ALLOWED_ORIGINS.split(",")]
 
-    # Redis (optional)
+    # Redis (for Celery task queue)
+    REDIS_PASSWORD: str = ""
     REDIS_URL: str = "redis://localhost:6379"
 
     # Firebase Cloud Messaging

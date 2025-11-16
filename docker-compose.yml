@@ -29,9 +29,6 @@ services:
     volumes:
       - ./app:/app/app  # Mount app directory for hot reload
       - ./alembic:/app/alembic  # Mount alembic for migrations
-    networks:
-      - default
-      - redis_network
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
   # Celery Worker (processes reminder notification tasks)
@@ -46,9 +43,6 @@ services:
     volumes:
       - ./app:/app/app  # Mount app directory for hot reload
       - ./celery_app.py:/app/celery_app.py
-    networks:
-      - default
-      - redis_network
     command: celery -A celery_app worker --loglevel=info --concurrency=2
 
   # Celery Beat (schedules periodic tasks like missed reminders check)
@@ -63,15 +57,7 @@ services:
     volumes:
       - ./app:/app/app  # Mount app directory for hot reload
       - ./celery_app.py:/app/celery_app.py
-    networks:
-      - default
-      - redis_network
     command: celery -A celery_app beat --loglevel=info
-
-networks:
-  redis_network:
-    external: true
-    name: redis_default
 
 # volumes:
 #   postgres_data:

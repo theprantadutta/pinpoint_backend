@@ -26,13 +26,13 @@ services:
     env_file:
       - .env
     environment:
-      - REDIS_URL=redis://host.docker.internal:6379
+      - REDIS_URL=redis://redis_server:6379
     restart: unless-stopped
     volumes:
       - ./app:/app/app  # Mount app directory for hot reload
       - ./alembic:/app/alembic  # Mount alembic for migrations
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+    external_links:
+      - redis_server
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
   # Celery Worker (processes reminder notification tasks)
@@ -41,7 +41,7 @@ services:
     env_file:
       - .env
     environment:
-      - REDIS_URL=redis://host.docker.internal:6379
+      - REDIS_URL=redis://redis_server:6379
     depends_on:
       backend:
         condition: service_started
@@ -49,8 +49,8 @@ services:
     volumes:
       - ./app:/app/app  # Mount app directory for hot reload
       - ./celery_app.py:/app/celery_app.py
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+    external_links:
+      - redis_server
     command: celery -A celery_app worker --loglevel=info --concurrency=2
 
   # Celery Beat (schedules periodic tasks like missed reminders check)
@@ -59,7 +59,7 @@ services:
     env_file:
       - .env
     environment:
-      - REDIS_URL=redis://host.docker.internal:6379
+      - REDIS_URL=redis://redis_server:6379
     depends_on:
       backend:
         condition: service_started
@@ -67,8 +67,8 @@ services:
     volumes:
       - ./app:/app/app  # Mount app directory for hot reload
       - ./celery_app.py:/app/celery_app.py
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+    external_links:
+      - redis_server
     command: celery -A celery_app beat --loglevel=info
 
 # volumes:

@@ -21,7 +21,7 @@ from app.models.user import User
 router = APIRouter()
 
 
-@router.post("/", response_model=ReminderResponse, status_code=201)
+@router.post("", response_model=ReminderResponse, status_code=201)
 async def create_reminder(
     reminder_data: ReminderCreate,
     current_user: User = Depends(get_current_user),
@@ -148,7 +148,7 @@ async def delete_reminder(
         )
 
 
-@router.get("/", response_model=ReminderListResponse)
+@router.get("", response_model=ReminderListResponse)
 async def get_reminders(
     include_triggered: bool = True,
     current_user: User = Depends(get_current_user),

@@ -20,7 +20,8 @@ app = FastAPI(
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
-    openapi_url=f"{settings.API_V1_PREFIX}/openapi.json"
+    openapi_url=f"{settings.API_V1_PREFIX}/openapi.json",
+    redirect_slashes=False  # Disable automatic slash redirects (fixes nginx proxy issues)
 )
 
 # Initialize rate limiter

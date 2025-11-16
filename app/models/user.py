@@ -50,6 +50,7 @@ class User(Base):
     fcm_tokens = relationship("FCMToken", back_populates="user", cascade="all, delete-orphan")
     encryption_key = relationship("EncryptionKey", back_populates="user", cascade="all, delete-orphan", uselist=False)
     usage_tracking = relationship("UsageTracking", back_populates="user", cascade="all, delete-orphan", uselist=False)
+    reminders = relationship("Reminder", back_populates="user", cascade="all, delete-orphan")
 
     @property
     def is_premium(self) -> bool:

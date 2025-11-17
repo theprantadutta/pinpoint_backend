@@ -14,13 +14,21 @@ scheduler = BackgroundScheduler(timezone="UTC")
 def start_scheduler():
     """Start the background scheduler"""
     try:
+        print("="*70)
+        print("🚀 STARTING APSCHEDULER...")
+        print(f"Scheduler running before start: {scheduler.running}")
+        print("="*70)
+
         if not scheduler.running:
             logger.info("🚀 Starting APScheduler...")
             scheduler.start()
+
+            print(f"✅ Scheduler started! Running: {scheduler.running}")
             logger.info("✅ Reminder scheduler started")
             logger.info(f"📊 Scheduler state: running={scheduler.running}, jobstores={list(scheduler._jobstores.keys())}")
 
             # Add periodic missed reminder check
+            print("Adding periodic missed reminder check...")
             scheduler.add_job(
                 check_missed_reminders,
                 trigger='interval',
@@ -28,17 +36,28 @@ def start_scheduler():
                 id='check_missed_reminders',
                 replace_existing=True,
             )
+            print("✅ Added periodic check job")
             logger.info("✅ Added periodic missed reminder check (every 5 minutes)")
 
             # Log all existing jobs
             jobs = scheduler.get_jobs()
+            print(f"📋 Total jobs in scheduler: {len(jobs)}")
             logger.info(f"📋 Current jobs in scheduler: {len(jobs)}")
             for job in jobs:
+                print(f"  - Job: {job.id}, next_run: {job.next_run_time}")
                 logger.info(f"  - Job: {job.id}, next_run: {job.next_run_time}")
+
+            print("="*70)
+            print("✅ SCHEDULER INITIALIZATION COMPLETE")
+            print("="*70)
         else:
             logger.info("⚠️ Scheduler already running")
+            print("⚠️ Scheduler already running")
     except Exception as e:
+        print(f"❌❌❌ CRITICAL ERROR: Failed to start scheduler: {e}")
         logger.error(f"❌ Failed to start scheduler: {e}", exc_info=True)
+        import traceback
+        traceback.print_exc()
         raise
 
 

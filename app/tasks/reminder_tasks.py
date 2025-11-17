@@ -17,7 +17,7 @@ def send_reminder_notification(reminder_id: str):
     """
     Send FCM push notification for a reminder to all user devices
 
-    This task is scheduled by Celery at the reminder's scheduled time.
+    This task is scheduled by APScheduler at the reminder's scheduled time.
     It sends notifications to all registered devices for the user.
 
     Args:
@@ -26,6 +26,11 @@ def send_reminder_notification(reminder_id: str):
     Returns:
         Dictionary with success status and message
     """
+    logger.info("="*70)
+    logger.info(f"🔔 REMINDER NOTIFICATION TRIGGERED! ID: {reminder_id}")
+    logger.info(f"🕐 Trigger time: {datetime.now()}")
+    logger.info("="*70)
+
     db: Session = SessionLocal()
 
     try:

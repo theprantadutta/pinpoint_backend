@@ -13,9 +13,33 @@ scheduler = BackgroundScheduler(timezone="UTC")
 
 def start_scheduler():
     """Start the background scheduler"""
-    if not scheduler.running:
-        scheduler.start()
-        logger.info("✅ Reminder scheduler started")
+    try:
+        if not scheduler.running:
+            logger.info("🚀 Starting APScheduler...")
+            scheduler.start()
+            logger.info("✅ Reminder scheduler started")
+            logger.info(f"📊 Scheduler state: running={scheduler.running}, jobstores={list(scheduler._jobstores.keys())}")
+
+            # Add periodic missed reminder check
+            scheduler.add_job(
+                check_missed_reminders,
+                trigger='interval',
+                minutes=5,
+                id='check_missed_reminders',
+                replace_existing=True,
+            )
+            logger.info("✅ Added periodic missed reminder check (every 5 minutes)")
+
+            # Log all existing jobs
+            jobs = scheduler.get_jobs()
+            logger.info(f"📋 Current jobs in scheduler: {len(jobs)}")
+            for job in jobs:
+                logger.info(f"  - Job: {job.id}, next_run: {job.next_run_time}")
+        else:
+            logger.info("⚠️ Scheduler already running")
+    except Exception as e:
+        logger.error(f"❌ Failed to start scheduler: {e}", exc_info=True)
+        raise
 
 
 def stop_scheduler():
@@ -37,18 +61,39 @@ def schedule_reminder(reminder_id: str, reminder_time: datetime):
         Job ID
     """
     from app.tasks.reminder_tasks import send_reminder_notification
+    from datetime import datetime
 
-    job = scheduler.add_job(
-        send_reminder_notification,
-        trigger=DateTrigger(run_date=reminder_time),
-        args=[reminder_id],
-        id=f"reminder_{reminder_id}",
-        replace_existing=True,
-        misfire_grace_time=300,  # Allow up to 5 minutes late execution
-    )
+    try:
+        current_time = datetime.utcnow()
+        time_diff = (reminder_time - current_time).total_seconds()
 
-    logger.info(f"📅 Scheduled reminder {reminder_id} for {reminder_time}")
-    return job.id
+        logger.info(f"🔔 Scheduling reminder {reminder_id}")
+        logger.info(f"  Current time (UTC): {current_time}")
+        logger.info(f"  Scheduled time (UTC): {reminder_time}")
+        logger.info(f"  Time until trigger: {time_diff:.1f} seconds ({time_diff/60:.1f} minutes)")
+        logger.info(f"  Scheduler running: {scheduler.running}")
+
+        job = scheduler.add_job(
+            send_reminder_notification,
+            trigger=DateTrigger(run_date=reminder_time),
+            args=[reminder_id],
+            id=f"reminder_{reminder_id}",
+            replace_existing=True,
+            misfire_grace_time=300,  # Allow up to 5 minutes late execution
+        )
+
+        logger.info(f"✅ Reminder {reminder_id} scheduled successfully with job_id={job.id}")
+        logger.info(f"  Next run time: {job.next_run_time}")
+
+        # List all jobs after adding
+        all_jobs = scheduler.get_jobs()
+        logger.info(f"📊 Total jobs in scheduler: {len(all_jobs)}")
+
+        return job.id
+
+    except Exception as e:
+        logger.error(f"❌ Failed to schedule reminder {reminder_id}: {e}", exc_info=True)
+        raise
 
 
 def cancel_reminder(job_id: str):
@@ -71,14 +116,6 @@ def check_missed_reminders():
     This runs periodically to catch any that were missed
     """
     from app.tasks.reminder_tasks import check_missed_reminders as check_task
-    check_task()
-
-
-# Schedule the periodic missed reminder check
-scheduler.add_job(
-    check_missed_reminders,
-    trigger='interval',
-    minutes=5,
-    id='check_missed_reminders',
-    replace_existing=True,
-)
+    logger.info("🔍 Running periodic check for missed reminders...")
+    result = check_task()
+    logger.info(f"✅ Missed reminder check complete: {result}")

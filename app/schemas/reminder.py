@@ -41,6 +41,10 @@ class ReminderCreate(BaseModel):
     @classmethod
     def validate_future_time(cls, v: datetime) -> datetime:
         """Ensure reminder time is in the future"""
+        # Remove timezone info if present (we store everything as UTC)
+        if v.tzinfo is not None:
+            v = v.replace(tzinfo=None)
+
         if v <= datetime.utcnow():
             raise ValueError('Reminder time must be in the future')
         return v
@@ -91,8 +95,13 @@ class ReminderUpdate(BaseModel):
     @classmethod
     def validate_future_time(cls, v: Optional[datetime]) -> Optional[datetime]:
         """Ensure reminder time is in the future"""
-        if v is not None and v <= datetime.utcnow():
-            raise ValueError('Reminder time must be in the future')
+        if v is not None:
+            # Remove timezone info if present (we store everything as UTC)
+            if v.tzinfo is not None:
+                v = v.replace(tzinfo=None)
+
+            if v <= datetime.utcnow():
+                raise ValueError('Reminder time must be in the future')
         return v
 
 

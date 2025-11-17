@@ -272,3 +272,62 @@ async def sync_reminders(
             status_code=500,
             detail=f"Failed to sync reminders: {str(e)}"
         )
+
+
+@router.post("/{reminder_id}/trigger-now", response_model=dict)
+async def trigger_reminder_now(
+    reminder_id: UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    DEBUG: Manually trigger a reminder notification immediately
+
+    This endpoint is for testing - it sends the notification right away
+    without waiting for the scheduled time.
+    """
+    from app.tasks.reminder_tasks import send_reminder_notification
+
+    # Verify reminder exists and belongs to user
+    from app.models.reminder import Reminder
+    reminder = db.query(Reminder).filter(
+        Reminder.id == reminder_id,
+        Reminder.user_id == current_user.id
+    ).first()
+
+    if not reminder:
+        raise HTTPException(status_code=404, detail="Reminder not found")
+
+    # Trigger the notification
+    result = send_reminder_notification(str(reminder_id))
+
+    return {
+        "success": True,
+        "message": "Notification triggered",
+        "result": result
+    }
+
+
+@router.get("/debug/scheduled-jobs", response_model=dict)
+async def get_scheduled_jobs(
+    current_user: User = Depends(get_current_user)
+):
+    """
+    DEBUG: Get list of all scheduled reminder jobs in APScheduler
+    """
+    from app.scheduler import scheduler
+
+    jobs = []
+    for job in scheduler.get_jobs():
+        jobs.append({
+            "id": job.id,
+            "next_run_time": str(job.next_run_time) if job.next_run_time else None,
+            "trigger": str(job.trigger),
+            "func_name": job.func.__name__ if hasattr(job, 'func') else None
+        })
+
+    return {
+        "scheduler_running": scheduler.running,
+        "total_jobs": len(jobs),
+        "jobs": jobs
+    }

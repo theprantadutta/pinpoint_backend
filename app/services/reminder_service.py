@@ -108,6 +108,7 @@ class ReminderService:
             List of created reminders (single for one-time, multiple for recurring)
         """
         # Generate occurrence times
+        logger.info(f"Creating reminder for user {user_id}: type={reminder_data.recurrence_type.value}, interval={reminder_data.recurrence_interval}")
         occurrence_times = self._generate_occurrence_times(
             start_time=reminder_data.reminder_time,
             recurrence_type=reminder_data.recurrence_type.value,
@@ -115,6 +116,7 @@ class ReminderService:
             recurrence_end_type=reminder_data.recurrence_end_type.value,
             recurrence_end_value=reminder_data.recurrence_end_value
         )
+        logger.info(f"Generated {len(occurrence_times)} occurrence(s) for reminder")
 
         # Generate series ID for recurring reminders
         series_id = uuid4() if reminder_data.recurrence_type != "once" else None
@@ -474,6 +476,9 @@ class ReminderService:
         """
         try:
             from app.scheduler import schedule_reminder
+            from datetime import datetime
+
+            logger.info(f"📅 Scheduling reminder {reminder.id} for {reminder.reminder_time} (current time: {datetime.utcnow()})")
 
             # Schedule the task
             job_id = schedule_reminder(
@@ -481,11 +486,11 @@ class ReminderService:
                 reminder_time=reminder.reminder_time
             )
 
-            logger.info(f"Scheduled reminder {reminder.id} at {reminder.reminder_time}")
+            logger.info(f"✅ Successfully scheduled reminder {reminder.id} with job_id={job_id}")
             return job_id
 
         except Exception as e:
-            logger.error(f"Failed to schedule reminder {reminder.id}: {e}")
+            logger.error(f"❌ Failed to schedule reminder {reminder.id}: {e}", exc_info=True)
             raise
 
     async def _cancel_reminder_task(self, task_id: str):

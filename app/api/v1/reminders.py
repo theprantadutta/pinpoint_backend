@@ -21,17 +21,17 @@ from app.models.user import User
 router = APIRouter()
 
 
-@router.post("", response_model=ReminderResponse, status_code=201)
+@router.post("", response_model=List[ReminderResponse], status_code=201)
 async def create_reminder(
     reminder_data: ReminderCreate,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
-    Create a new reminder
+    Create new reminder(s)
 
-    Creates a reminder in the database and schedules a Celery task
-    to send FCM push notification to all user devices at the scheduled time.
+    Creates reminders in the database and schedules tasks to send FCM push notifications.
+    For recurring reminders, creates multiple occurrences (up to 100 or 1 year ahead).
 
     Args:
         reminder_data: Reminder creation data
@@ -39,16 +39,16 @@ async def create_reminder(
         db: Database session
 
     Returns:
-        Created reminder
+        List of created reminders (single for one-time, multiple for recurring)
     """
     service = ReminderService(db)
 
     try:
-        reminder = await service.create_reminder(
+        reminders = await service.create_reminder(
             user_id=current_user.id,
             reminder_data=reminder_data
         )
-        return reminder
+        return reminders
     except Exception as e:
         raise HTTPException(
             status_code=500,
@@ -56,43 +56,47 @@ async def create_reminder(
         )
 
 
-@router.put("/{reminder_id}", response_model=ReminderResponse)
+@router.put("/{reminder_id}", response_model=List[ReminderResponse])
 async def update_reminder(
     reminder_id: UUID,
     reminder_data: ReminderUpdate,
+    update_series: bool = False,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
-    Update an existing reminder
+    Update an existing reminder or series
 
-    If the reminder time is updated, the Celery task will be rescheduled.
+    If the reminder time is updated, the task(s) will be rescheduled.
+    Use update_series=true to update all future occurrences in a recurring series.
 
     Args:
         reminder_id: Reminder ID
         reminder_data: Update data
+        update_series: If true, update all future occurrences in the series
         current_user: Authenticated user
         db: Database session
 
     Returns:
-        Updated reminder
+        List of updated reminders
     """
     service = ReminderService(db)
 
     try:
-        reminder = await service.update_reminder(
+        reminders = await service.update_reminder(
             reminder_id=reminder_id,
             user_id=current_user.id,
-            reminder_data=reminder_data
+            reminder_data=reminder_data,
+            update_series=update_series
         )
 
-        if not reminder:
+        if not reminders:
             raise HTTPException(
                 status_code=404,
                 detail="Reminder not found"
             )
 
-        return reminder
+        return reminders
     except HTTPException:
         raise
     except Exception as e:
@@ -105,18 +109,21 @@ async def update_reminder(
 @router.delete("/{reminder_id}", response_model=ReminderDeleteResponse)
 async def delete_reminder(
     reminder_id: UUID,
+    delete_series: bool = False,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
-    Delete a reminder
+    Delete a reminder or entire series
 
-    Cancels the scheduled Celery task and removes the reminder from database.
+    Cancels scheduled task(s) and removes reminder(s) from database.
+    Use delete_series=true to delete all occurrences in a recurring series.
 
     Args:
         reminder_id: Reminder ID
+        delete_series: If true, delete all occurrences in the series
         current_user: Authenticated user
-        db: Database session
+        db: Session database
 
     Returns:
         Deletion confirmation
@@ -124,19 +131,24 @@ async def delete_reminder(
     service = ReminderService(db)
 
     try:
-        deleted = await service.delete_reminder(
+        success, deleted_count = await service.delete_reminder(
             reminder_id=reminder_id,
-            user_id=current_user.id
+            user_id=current_user.id,
+            delete_series=delete_series
         )
 
-        if not deleted:
+        if not success:
             raise HTTPException(
                 status_code=404,
                 detail="Reminder not found"
             )
 
+        message = f"Deleted {deleted_count} reminder(s) successfully"
+        if delete_series and deleted_count > 1:
+            message = f"Deleted series: {deleted_count} reminders"
+
         return ReminderDeleteResponse(
-            message="Reminder deleted successfully",
+            message=message,
             deleted_id=reminder_id
         )
     except HTTPException:

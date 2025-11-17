@@ -1,10 +1,28 @@
 """Reminder model for backend-scheduled notifications"""
-from sqlalchemy import Column, String, Boolean, DateTime, Text, ForeignKey, Index
+from sqlalchemy import Column, String, Boolean, DateTime, Text, ForeignKey, Index, Integer, Enum as SQLEnum
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from datetime import datetime
+from enum import Enum
 import uuid
 from app.database import Base
+
+
+class RecurrenceType(str, Enum):
+    """Types of reminder recurrence"""
+    ONCE = "once"
+    HOURLY = "hourly"
+    DAILY = "daily"
+    WEEKLY = "weekly"
+    MONTHLY = "monthly"
+    YEARLY = "yearly"
+
+
+class RecurrenceEndType(str, Enum):
+    """How recurring reminders end"""
+    NEVER = "never"
+    AFTER_OCCURRENCES = "after_occurrences"
+    ON_DATE = "on_date"
 
 
 class Reminder(Base):
@@ -28,10 +46,23 @@ class Reminder(Base):
     # Note reference (UUID from client-side note)
     note_uuid = Column(String(255), nullable=False, index=True)
 
-    # Reminder details
-    title = Column(String(500), nullable=False)
-    description = Column(Text, nullable=True)
+    # Reminder details (title is for internal organization, notification_title is shown to user)
+    title = Column(String(500), nullable=False)  # Note title for app organization
+    notification_title = Column(String(500), nullable=False)  # Title shown in push notification
+    notification_content = Column(Text, nullable=True)  # Content shown in notification body
+    description = Column(Text, nullable=True)  # Deprecated, use notification_content
     reminder_time = Column(DateTime, nullable=False, index=True)
+
+    # Recurrence settings
+    recurrence_type = Column(String(20), nullable=False, default="once", index=True)
+    recurrence_interval = Column(Integer, nullable=False, default=1)  # Every X hours/days/weeks/months/years
+    recurrence_end_type = Column(String(20), nullable=False, default="never")
+    recurrence_end_value = Column(String(100), nullable=True)  # Number or ISO date string
+
+    # Series tracking for recurring reminders
+    parent_reminder_id = Column(UUID(as_uuid=True), ForeignKey("reminders.id", ondelete="CASCADE"), nullable=True, index=True)
+    occurrence_number = Column(Integer, nullable=False, default=1)  # Which occurrence (1, 2, 3...)
+    series_id = Column(UUID(as_uuid=True), nullable=True, index=True)  # Groups all occurrences
 
     # Status tracking
     is_triggered = Column(Boolean, default=False, nullable=False, index=True)
@@ -46,6 +77,7 @@ class Reminder(Base):
 
     # Relationships
     user = relationship("User", back_populates="reminders")
+    parent = relationship("Reminder", remote_side=[id], backref="occurrences")
 
     # Composite indexes for efficient queries
     __table_args__ = (
@@ -71,5 +103,13 @@ class Reminder(Base):
         self.triggered_at = datetime.utcnow()
         self.updated_at = datetime.utcnow()
 
+    def is_recurring(self) -> bool:
+        """Check if reminder is part of a recurring series"""
+        return self.recurrence_type != "once"
+
+    def is_series_parent(self) -> bool:
+        """Check if this is the parent of a recurring series"""
+        return self.is_recurring() and self.parent_reminder_id is None
+
     def __repr__(self):
-        return f"<Reminder(id={self.id}, user_id={self.user_id}, title='{self.title}', time={self.reminder_time}, triggered={self.is_triggered})>"
+        return f"<Reminder(id={self.id}, user_id={self.user_id}, title='{self.title}', notification_title='{self.notification_title}', time={self.reminder_time}, recurrence={self.recurrence_type}, triggered={self.is_triggered})>"

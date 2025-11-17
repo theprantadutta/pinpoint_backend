@@ -71,11 +71,15 @@ def send_reminder_notification(reminder_id: str):
 
         for token in fcm_tokens:
             try:
+                # Use notification_title and notification_content (new fields)
+                notification_title = reminder.notification_title or reminder.title or "Reminder"
+                notification_body = reminder.notification_content or reminder.description or "Reminder notification"
+
                 # Run the async send_notification method
                 result = asyncio.run(notification_service.send_notification(
                     fcm_token=token.fcm_token,
-                    title=f"⏰ {reminder.title}",
-                    body=reminder.description or "Reminder notification",
+                    title=f"⏰ {notification_title}",
+                    body=notification_body,
                     data={
                         "type": "reminder",
                         "reminder_id": str(reminder.id),

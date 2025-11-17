@@ -10,7 +10,7 @@ from pathlib import Path
 import shutil
 
 from app.database import get_db
-from app.core.security import get_current_user
+from app.core.dependencies import get_current_user
 
 router = APIRouter()
 

@@ -5,6 +5,7 @@ Handles all usage tracking, limit enforcement, and monthly resets
 for free tier users.
 """
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
 from app.models.user import User, UsageTracking
 from app.models.note import EncryptedNote
 from typing import Dict, Optional
@@ -228,6 +229,7 @@ class UsageService:
         Reconcile synced notes count with actual database count.
 
         Counts non-deleted notes in the database and updates the tracking record.
+        Excludes reminder notes as they don't count toward the 50-note limit.
 
         Args:
             user_id: User's UUID
@@ -235,10 +237,15 @@ class UsageService:
         Returns:
             The reconciled count
         """
-        # Count actual non-deleted notes in database
+        # Count actual non-deleted notes in database (excluding reminders)
+        # Reminder notes are a free feature and don't count toward sync limits
         actual_count = self.db.query(EncryptedNote).filter(
             EncryptedNote.user_id == user_id,
-            EncryptedNote.is_deleted == False
+            EncryptedNote.is_deleted == False,
+            or_(
+                EncryptedNote.note_metadata['type'].astext != 'reminder',
+                EncryptedNote.note_metadata['type'].astext == None
+            )
         ).count()
 
         # Update tracking record

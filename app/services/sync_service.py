@@ -86,13 +86,18 @@ class SyncService:
         is_premium = user.is_premium
 
         # Count how many NEW notes we're trying to create (vs updates)
+        # Exclude reminder notes as they don't count toward the 50-note limit
         new_notes_count = 0
         for note_data in encrypted_notes:
             existing_note = self.db.query(EncryptedNote).filter(
                 EncryptedNote.user_id == user_id,
                 EncryptedNote.client_note_uuid == note_data.client_note_uuid
             ).first()
-            if not existing_note and not (note_data.metadata and note_data.metadata.is_deleted):
+            # Only count non-deleted, non-reminder notes
+            is_new = not existing_note
+            is_not_deleted = not (note_data.metadata and note_data.metadata.is_deleted)
+            is_not_reminder = not (note_data.metadata and note_data.metadata.type == 'reminder')
+            if is_new and is_not_deleted and is_not_reminder:
                 new_notes_count += 1
 
         # For free users, check if they would exceed limit
@@ -196,8 +201,11 @@ class SyncService:
                 updated_notes.append(new_note)
                 synced_count += 1
 
-                # Track new note creation
-                if not (note_data.metadata and note_data.metadata.is_deleted):
+                # Track new note creation (exclude reminder notes from count)
+                # Reminder notes are a free feature and don't count toward sync limits
+                is_not_deleted = not (note_data.metadata and note_data.metadata.is_deleted)
+                is_not_reminder = not (note_data.metadata and note_data.metadata.type == 'reminder')
+                if is_not_deleted and is_not_reminder:
                     new_notes_created += 1
 
         # Commit all changes
@@ -267,18 +275,29 @@ class SyncService:
         """
         usage_service = UsageService(self.db)
 
-        notes = self.db.query(EncryptedNote).filter(
+        # Get notes to be deleted
+        notes_to_delete = self.db.query(EncryptedNote).filter(
+            EncryptedNote.user_id == user_id,
+            EncryptedNote.client_note_uuid.in_(client_note_uuids)
+        ).all()
+
+        # Count only non-reminder notes for usage tracking
+        # Reminder notes don't count toward the 50-note limit
+        non_reminder_count = sum(
+            1 for note in notes_to_delete
+            if not (note.note_metadata and note.note_metadata.get('type') == 'reminder')
+        )
+
+        # Perform deletion
+        notes_query = self.db.query(EncryptedNote).filter(
             EncryptedNote.user_id == user_id,
             EncryptedNote.client_note_uuid.in_(client_note_uuids)
         )
 
-        # Count notes before deletion for usage tracking
-        count = notes.count()
-
         if hard_delete:
-            notes.delete(synchronize_session=False)
+            notes_query.delete(synchronize_session=False)
         else:
-            notes.update(
+            notes_query.update(
                 {"is_deleted": True, "updated_at": datetime.utcnow()},
                 synchronize_session=False
             )
@@ -286,9 +305,9 @@ class SyncService:
         self.db.commit()
 
         # Decrement usage counter for deleted notes (FREE USERS ONLY)
-        # Premium users don't track usage
+        # Only count non-reminder notes
         user = self.db.query(User).filter(User.id == user_id).first()
-        if count > 0 and user and not user.is_premium:
-            usage_service.decrement_synced_notes(user_id, count)
+        if non_reminder_count > 0 and user and not user.is_premium:
+            usage_service.decrement_synced_notes(user_id, non_reminder_count)
 
-        return count
+        return len(notes_to_delete)

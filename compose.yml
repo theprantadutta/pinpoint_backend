@@ -1,0 +1,22 @@
+services:
+  backend:
+    build: .
+    env_file:
+      - .env
+    restart: unless-stopped
+    volumes:
+      - ./app:/app/app
+      - ./alembic:/app/alembic
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.pinpoint.rule=Host(`pinpoint.pranta.dev`)"
+      - "traefik.http.routers.pinpoint.entrypoints=websecure"
+      - "traefik.http.routers.pinpoint.tls.certresolver=letsencrypt"
+      - "traefik.http.services.pinpoint.loadbalancer.server.port=8000"
+
+networks:
+  proxy:
+    external: true

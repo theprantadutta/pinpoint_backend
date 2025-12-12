@@ -39,20 +39,20 @@ python run.py
 
 Or with uvicorn directly:
 ```bash
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8645
 ```
 
 ### Step 6: Access API Docs
 Open in your browser:
-- **Swagger UI**: http://localhost:8000/docs
-- **ReDoc**: http://localhost:8000/redoc
-- **Health Check**: http://localhost:8000/health
+- **Swagger UI**: http://localhost:8645/docs
+- **ReDoc**: http://localhost:8645/redoc
+- **Health Check**: http://localhost:8645/health
 
 ## 🧪 Test the API
 
 ### Register a User
 ```bash
-curl -X POST "http://localhost:8000/api/v1/auth/register" \
+curl -X POST "http://localhost:8645/api/v1/auth/register" \
   -H "Content-Type: application/json" \
   -d '{
     "email": "test@example.com",
@@ -62,7 +62,7 @@ curl -X POST "http://localhost:8000/api/v1/auth/register" \
 
 ### Login
 ```bash
-curl -X POST "http://localhost:8000/api/v1/auth/login" \
+curl -X POST "http://localhost:8645/api/v1/auth/login" \
   -H "Content-Type: application/json" \
   -d '{
     "email": "test@example.com",
@@ -74,13 +74,13 @@ This returns a JWT token. Use it in subsequent requests:
 
 ### Get User Info
 ```bash
-curl -X GET "http://localhost:8000/api/v1/auth/me" \
+curl -X GET "http://localhost:8645/api/v1/auth/me" \
   -H "Authorization: Bearer YOUR_TOKEN_HERE"
 ```
 
 ### Sync Notes (Encrypted)
 ```bash
-curl -X POST "http://localhost:8000/api/v1/notes/sync" \
+curl -X POST "http://localhost:8645/api/v1/notes/sync" \
   -H "Authorization: Bearer YOUR_TOKEN_HERE" \
   -H "Content-Type: application/json" \
   -d '{
@@ -106,12 +106,12 @@ docker-compose up -d
 ```
 
 This starts:
-- Backend API on port 8000
+- Backend API on port 8645
 - Redis on port 6379 (for caching)
 
 ### Access the API
 ```
-http://localhost:8000/docs
+http://localhost:8645/docs
 ```
 
 ## 📦 Project Structure
@@ -170,7 +170,7 @@ In your Flutter app, update the API base URL:
 
 ```dart
 // lib/services/api_service.dart
-static const String baseUrl = 'http://localhost:8000'; // Development
+static const String baseUrl = 'http://localhost:8645'; // Development
 // static const String baseUrl = 'https://api.pinpoint.app'; // Production
 ```
 

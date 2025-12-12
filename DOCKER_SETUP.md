@@ -10,7 +10,7 @@ This setup includes the FastAPI backend, Celery worker, and Celery beat schedule
 
 The docker-compose.yml defines 3 services:
 
-1. **backend** - FastAPI application (port 84 → 8000)
+1. **backend** - FastAPI application (port 84 → 8645)
 2. **celery-worker** - Processes reminder notification tasks
 3. **celery-beat** - Schedules periodic tasks (checks for missed reminders every 5 minutes)
 

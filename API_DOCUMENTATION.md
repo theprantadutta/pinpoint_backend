@@ -2,7 +2,7 @@
 
 ## Base URL
 ```
-Development: http://localhost:8000
+Development: http://localhost:8645
 Production: https://api.pinpoint.app
 ```
 
@@ -450,7 +450,7 @@ Planned webhooks for real-time notifications:
 ## Interactive Documentation
 
 Visit the auto-generated API documentation:
-- **Swagger UI**: http://localhost:8000/docs
-- **ReDoc**: http://localhost:8000/redoc
+- **Swagger UI**: http://localhost:8645/docs
+- **ReDoc**: http://localhost:8645/redoc
 
 Both provide interactive API testing directly in the browser!

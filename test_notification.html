@@ -161,7 +161,7 @@
 
         <div class="info-box">
             <strong>Endpoint:</strong> <span class="endpoint-info">POST /api/v1/notifications/test</span><br>
-            <strong>Backend URL:</strong> <span id="backendUrl" class="endpoint-info">http://localhost:8000</span>
+            <strong>Backend URL:</strong> <span id="backendUrl" class="endpoint-info">http://localhost:8645</span>
         </div>
 
         <button id="testBtn" onclick="testNotification()">
@@ -172,7 +172,7 @@
     </div>
 
     <script>
-        const BASE_URL = 'http://localhost:8000';
+        const BASE_URL = 'http://localhost:8645';
 
         async function testNotification() {
             const resultDiv = document.getElementById('result');
@@ -242,7 +242,7 @@
         // Auto-detect backend URL if running on different port
         if (window.location.hostname !== 'localhost') {
             document.getElementById('backendUrl').textContent =
-                `http://${window.location.hostname}:8000`;
+                `http://${window.location.hostname}:8645`;
         }
     </script>
 </body>

@@ -148,10 +148,10 @@ docker-compose up -d
 
 Once running, access these URLs:
 
-- **API**: http://localhost:8000
-- **Swagger Docs**: http://localhost:8000/docs
-- **ReDoc**: http://localhost:8000/redoc
-- **Health Check**: http://localhost:8000/health
+- **API**: http://localhost:8645
+- **Swagger Docs**: http://localhost:8645/docs
+- **ReDoc**: http://localhost:8645/redoc
+- **Health Check**: http://localhost:8645/health
 
 ---
 
@@ -200,7 +200,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://localhost:8000';
+  static const String baseUrl = 'http://localhost:8645';
   final Dio _dio = Dio();
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
@@ -269,21 +269,21 @@ dependencies:
 
 ```bash
 # Register
-curl -X POST http://localhost:8000/api/v1/auth/register \
+curl -X POST http://localhost:8645/api/v1/auth/register \
   -H "Content-Type: application/json" \
   -d '{"email": "test@example.com", "password": "Test123"}'
 
 # Login
-curl -X POST http://localhost:8000/api/v1/auth/login \
+curl -X POST http://localhost:8645/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email": "test@example.com", "password": "Test123"}'
 
 # Get user info (replace TOKEN)
-curl -X GET http://localhost:8000/api/v1/auth/me \
+curl -X GET http://localhost:8645/api/v1/auth/me \
   -H "Authorization: Bearer TOKEN"
 ```
 
-Or use the **interactive Swagger UI** at http://localhost:8000/docs
+Or use the **interactive Swagger UI** at http://localhost:8645/docs
 
 ---
 

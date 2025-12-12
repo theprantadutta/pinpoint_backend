@@ -82,3 +82,5 @@ celerybeat.pid
 
 # OS
 Thumbs.db
+
+.claude/

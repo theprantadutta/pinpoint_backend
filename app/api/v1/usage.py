@@ -6,7 +6,9 @@ from app.schemas.usage import (
     UsageStatsResponse,
     ReconcileUsageRequest,
     ReconcileUsageResponse,
+    IncrementUsageResponse,
 )
+from app.services.usage_service import FREE_TIER_LIMITS
 from app.services.usage_service import UsageService
 from app.core.dependencies import get_current_user
 from app.models.user import User
@@ -88,4 +90,84 @@ async def reconcile_usage(
         raise HTTPException(
             status_code=500,
             detail=f"Failed to reconcile usage: {str(e)}"
+        )
+
+
+@router.post("/ocr", response_model=IncrementUsageResponse)
+async def increment_ocr_scans(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Increment the OCR scans counter for the authenticated user.
+
+    This endpoint is called by the frontend after each successful OCR operation.
+    Free users are limited to 20 OCR scans per month (resets on 1st of each month).
+    Premium users have unlimited OCR scans.
+
+    Returns the updated usage statistics for OCR scans.
+    """
+    usage_service = UsageService(db)
+
+    try:
+        # Increment the counter
+        usage_service.increment_ocr_scans(str(current_user.id))
+
+        # Get updated stats
+        tracking = usage_service.get_or_create_usage_tracking(str(current_user.id))
+        is_premium = current_user.is_premium
+        limit = -1 if is_premium else FREE_TIER_LIMITS["ocr_scans_month"]
+        remaining = -1 if is_premium else max(0, limit - tracking.ocr_scans_month)
+
+        return {
+            "success": True,
+            "message": "OCR scan counted successfully",
+            "current": tracking.ocr_scans_month,
+            "limit": limit,
+            "remaining": remaining,
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to increment OCR scans: {str(e)}"
+        )
+
+
+@router.post("/export", response_model=IncrementUsageResponse)
+async def increment_exports(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Increment the exports counter for the authenticated user.
+
+    This endpoint is called by the frontend after each successful export (PDF/Markdown).
+    Free users are limited to 10 exports per month (resets on 1st of each month).
+    Premium users have unlimited exports.
+
+    Returns the updated usage statistics for exports.
+    """
+    usage_service = UsageService(db)
+
+    try:
+        # Increment the counter
+        usage_service.increment_exports(str(current_user.id))
+
+        # Get updated stats
+        tracking = usage_service.get_or_create_usage_tracking(str(current_user.id))
+        is_premium = current_user.is_premium
+        limit = -1 if is_premium else FREE_TIER_LIMITS["exports_month"]
+        remaining = -1 if is_premium else max(0, limit - tracking.exports_month)
+
+        return {
+            "success": True,
+            "message": "Export counted successfully",
+            "current": tracking.exports_month,
+            "limit": limit,
+            "remaining": remaining,
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to increment exports: {str(e)}"
         )

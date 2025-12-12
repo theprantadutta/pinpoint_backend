@@ -34,3 +34,12 @@ class ReconcileUsageResponse(BaseModel):
     old_count: int
     new_count: int
     reconciled: bool
+
+
+class IncrementUsageResponse(BaseModel):
+    """Response after incrementing a usage counter"""
+    success: bool
+    message: str
+    current: int  # New total after increment
+    limit: int  # Limit (-1 for unlimited)
+    remaining: int  # Remaining after increment (-1 for unlimited)

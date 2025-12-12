@@ -5,11 +5,12 @@ Privacy-first note-taking backend built with FastAPI and PostgreSQL.
 ## Features
 
 - 🔐 **End-to-End Encryption**: Notes are encrypted client-side before reaching the server
-- 🔑 **JWT Authentication**: Secure token-based authentication
-- 💳 **Subscription Management**: Google Play purchase verification
+- 🔑 **Firebase Authentication**: Google Sign-In with Firebase token verification
+- 💳 **Subscription Management**: Google Play purchase verification with grace periods
+- 📊 **Usage Tracking**: Cloud-based limits for OCR, exports, and synced notes
 - 🔔 **Push Notifications**: Firebase Cloud Messaging integration
 - 🔄 **Real-time Sync**: Cross-device note synchronization
-- 📊 **Auto-generated API Docs**: Swagger UI and ReDoc
+- 📈 **Auto-generated API Docs**: Swagger UI and ReDoc
 
 ## Tech Stack
 
@@ -17,64 +18,58 @@ Privacy-first note-taking backend built with FastAPI and PostgreSQL.
 - **Database**: PostgreSQL
 - **ORM**: SQLAlchemy
 - **Migrations**: Alembic
-- **Authentication**: JWT (python-jose)
-- **Password Hashing**: bcrypt
+- **Authentication**: Firebase Admin SDK + JWT
 - **Push Notifications**: Firebase Cloud Messaging
 - **Payment Verification**: Google Play Developer API
+- **Server**: Uvicorn (ASGI)
 
 ## Project Structure
 
 ```
 pinpoint_backend/
 ├── app/
-│   ├── __init__.py
-│   ├── main.py                 # FastAPI application
-│   ├── config.py               # Configuration
+│   ├── main.py                 # FastAPI application entry
+│   ├── config.py               # Configuration from env
 │   ├── database.py             # Database connection
 │   │
 │   ├── models/                 # SQLAlchemy models
-│   │   ├── __init__.py
-│   │   ├── user.py
-│   │   ├── note.py
-│   │   ├── subscription.py
-│   │   └── notification.py
+│   │   ├── user.py             # User, UsageTracking
+│   │   ├── note.py             # EncryptedNote
+│   │   ├── subscription.py     # SubscriptionEvent
+│   │   └── notification.py     # FCMToken
 │   │
 │   ├── schemas/                # Pydantic schemas
-│   │   ├── __init__.py
 │   │   ├── user.py
 │   │   ├── note.py
 │   │   ├── auth.py
-│   │   └── subscription.py
+│   │   ├── subscription.py
+│   │   └── usage.py            # Usage tracking schemas
 │   │
-│   ├── api/                    # API routes
-│   │   ├── __init__.py
-│   │   └── v1/
-│   │       ├── __init__.py
-│   │       ├── auth.py
-│   │       ├── notes.py
-│   │       ├── subscription.py
-│   │       └── notifications.py
+│   ├── api/v1/                 # API routes
+│   │   ├── auth.py             # Firebase auth endpoints
+│   │   ├── notes.py            # Note sync endpoints
+│   │   ├── subscription.py     # Google Play verification
+│   │   ├── usage.py            # Usage tracking endpoints
+│   │   └── notifications.py    # FCM token management
 │   │
 │   ├── services/               # Business logic
-│   │   ├── __init__.py
 │   │   ├── auth_service.py
 │   │   ├── sync_service.py
+│   │   ├── usage_service.py    # Usage limits & tracking
 │   │   ├── payment_service.py
 │   │   └── notification_service.py
 │   │
 │   └── core/                   # Core utilities
-│       ├── __init__.py
 │       ├── security.py
 │       └── dependencies.py
 │
 ├── alembic/                    # Database migrations
-├── tests/                      # Unit tests
+│   └── versions/               # Migration files
+├── run.py                      # Server startup script
 ├── .env                        # Environment variables (gitignored)
-├── .env.example               # Example environment file
-├── requirements.txt           # Python dependencies
-├── Dockerfile                 # Docker configuration
-├── docker-compose.yml        # Docker Compose
-└── README.md                 # This file
+├── .env.example                # Example environment file
+├── requirements.txt            # Python dependencies
+└── README.md
 ```
 
 ## Quick Start
@@ -123,39 +118,49 @@ alembic upgrade head
 ### 6. Start the Server
 
 ```bash
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+# Using run.py (recommended - uses configured port)
+python run.py
+
+# Or using uvicorn directly
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8645
 ```
 
 The API will be available at:
-- **API**: http://localhost:8000
-- **Swagger Docs**: http://localhost:8000/docs
-- **ReDoc**: http://localhost:8000/redoc
+- **API**: http://localhost:8645
+- **Swagger Docs**: http://localhost:8645/docs
+- **ReDoc**: http://localhost:8645/redoc
 
 ## API Documentation
 
 ### Authentication
 
-#### Register
+Uses Firebase Authentication. The Flutter app obtains a Firebase ID token via Google Sign-In, which is then exchanged for a backend JWT.
+
+#### Firebase Token Exchange
 ```http
-POST /api/v1/auth/register
+POST /api/v1/auth/firebase
 Content-Type: application/json
 
 {
-  "email": "user@example.com",
-  "password": "SecurePassword123"
+  "firebase_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "device_id": "unique_device_identifier"
 }
 ```
 
-#### Login
-```http
-POST /api/v1/auth/login
-Content-Type: application/json
-
+Response:
+```json
 {
-  "email": "user@example.com",
-  "password": "SecurePassword123"
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "token_type": "bearer",
+  "user": {
+    "id": "uuid",
+    "email": "user@example.com",
+    "is_premium": false
+  }
 }
 ```
+
+All subsequent requests use the `access_token` as a Bearer token.
 
 ### Notes Sync
 
@@ -206,6 +211,54 @@ GET /api/v1/subscription/status
 Authorization: Bearer <token>
 ```
 
+### Usage Tracking
+
+#### Get Usage Stats
+```http
+GET /api/v1/usage/stats
+Authorization: Bearer <token>
+```
+
+Response:
+```json
+{
+  "is_premium": false,
+  "subscription_tier": "free",
+  "synced_notes": { "current": 12, "limit": 50, "unlimited": false, "remaining": 38 },
+  "ocr_scans": { "current": 5, "limit": 20, "unlimited": false, "remaining": 15 },
+  "exports": { "current": 2, "limit": 10, "unlimited": false, "remaining": 8 },
+  "last_updated": "2025-12-12T10:30:00Z"
+}
+```
+
+#### Increment OCR Scans
+```http
+POST /api/v1/usage/ocr
+Authorization: Bearer <token>
+```
+
+#### Increment Exports
+```http
+POST /api/v1/usage/export
+Authorization: Bearer <token>
+```
+
+#### Reconcile Synced Notes Count
+```http
+POST /api/v1/usage/reconcile
+Authorization: Bearer <token>
+```
+
+### Free Tier Limits
+
+| Feature | Limit |
+|---------|-------|
+| Synced Notes | 50 total |
+| OCR Scans | 20/month |
+| Exports | 10/month |
+
+> Monthly limits reset on the 1st of each month.
+
 ### Push Notifications
 
 #### Register FCM Token
@@ -248,7 +301,7 @@ docker-compose up -d
 
 ### Access the API
 ```
-http://localhost:8000
+http://localhost:8645
 ```
 
 ## Testing

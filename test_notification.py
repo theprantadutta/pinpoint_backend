@@ -6,7 +6,7 @@ import requests
 import json
 
 # Backend URL
-BASE_URL = "http://localhost:8000"
+BASE_URL = "http://localhost:8645"
 
 def test_notification():
     """Test the notification endpoint"""

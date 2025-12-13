@@ -58,7 +58,7 @@ Configure these three subscription/product items in Google Play Console:
 - **Product Type**: Auto-renewable subscription
 - **Base Plan Name**: Annual Premium
 - **Billing Period**: Every 12 months
-- **Price**: **$49.99 USD/year** (17% savings vs monthly)
+- **Price**: **$39.99 USD/year** (33% savings vs monthly)
 
 **Free Trial Configuration:**
 - **Enable Free Trial**: Yes
@@ -88,7 +88,7 @@ Configure these three subscription/product items in Google Play Console:
 **Product Details:**
 - **Product ID**: `pinpoint_premium_lifetime`
 - **Product Type**: One-time product (in-app product)
-- **Price**: **$199.99 USD** (one-time payment)
+- **Price**: **$99.99 USD** (one-time payment)
 - **Product Name**: Lifetime Premium Access
 - **Description**: One-time payment for lifetime access to all premium features
 
@@ -250,10 +250,8 @@ Edit your `.env` file on the backend:
 
 ```env
 # Google Play Billing
-GOOGLE_PLAY_SERVICE_ACCOUNT_JSON=/path/to/google-play-service-account.json
-
-# Or set the content directly as a JSON string
-# GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_CONTENT={"type":"service_account",...}
+GOOGLE_PLAY_SERVICE_ACCOUNT_PATH=/path/to/google-play-service-account.json
+GOOGLE_PLAY_PACKAGE_NAME=com.pinpoint.app
 
 # Subscription Settings
 GRACE_PERIOD_DAYS=3
@@ -304,12 +302,12 @@ This adds the `grace_period_ends_at` column to the users table.
 | Product | Type | Price | Trial | Grace Period |
 |---------|------|-------|-------|--------------|
 | Monthly | Subscription | $4.99/month | 7 days | 3 days |
-| Yearly | Subscription | $49.99/year | 7 days | 3 days |
-| Lifetime | One-time | $199.99 | No | No |
+| Yearly | Subscription | $39.99/year | 7 days | 3 days |
+| Lifetime | One-time | $99.99 | No | No |
 
 **Savings:**
-- Yearly vs Monthly: Save **$9.89** (17% discount)
-- Lifetime vs 4 years monthly: Save **$39.77**
+- Yearly vs Monthly: Save **$19.89** (33% discount)
+- Lifetime vs 3 years monthly: Save **$79.65**
 
 ---
 

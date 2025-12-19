@@ -56,6 +56,11 @@ class Settings(BaseSettings):
     GOOGLE_PLAY_SERVICE_ACCOUNT_PATH: str = "google-play-service-account.json"
     GOOGLE_PLAY_PACKAGE_NAME: str = "com.pinpoint.app"
 
+    # Google Play RTDN (Real-Time Developer Notifications) Webhook
+    # Set this to a secure random string and add it as a query param to your Pub/Sub push endpoint
+    # e.g., https://your-api.com/api/v1/webhooks/google-play?token=YOUR_TOKEN
+    GOOGLE_PLAY_PUBSUB_VERIFICATION_TOKEN: str = ""
+
     # Email Configuration
     SMTP_HOST: str = "smtp.gmail.com"
     SMTP_PORT: int = 587

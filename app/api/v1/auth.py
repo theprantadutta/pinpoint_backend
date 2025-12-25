@@ -3,9 +3,10 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.schemas.user import UserCreate, UserLogin, UserResponse
-from app.schemas.auth import Token
+from app.schemas.auth import Token, RefreshTokenRequest
 from app.services.auth_service import AuthService
 from app.core.dependencies import get_current_user
+from app.core.security import create_refresh_token, decode_refresh_token, create_access_token
 from app.models.user import User
 
 router = APIRouter()
@@ -35,11 +36,13 @@ async def register(
     # Create user
     user = auth_service.create_user(user_data)
 
-    # Create access token
+    # Create access and refresh tokens
     access_token = auth_service.create_access_token_for_user(user)
+    refresh_token = create_refresh_token(data={"sub": str(user.id)})
 
     return {
         "access_token": access_token,
+        "refresh_token": refresh_token,
         "token_type": "bearer",
         "user_id": str(user.id)
     }
@@ -70,11 +73,13 @@ async def login(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    # Create access token
+    # Create access and refresh tokens
     access_token = auth_service.create_access_token_for_user(user)
+    refresh_token = create_refresh_token(data={"sub": str(user.id)})
 
     return {
         "access_token": access_token,
+        "refresh_token": refresh_token,
         "token_type": "bearer",
         "user_id": str(user.id)
     }
@@ -102,3 +107,57 @@ async def logout(
     In JWT, logout is primarily handled client-side
     """
     return {"message": "Logged out successfully"}
+
+
+@router.post("/refresh", response_model=Token)
+async def refresh_access_token(
+    request: RefreshTokenRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    Refresh access token using refresh token
+
+    - **refresh_token**: Valid refresh token
+
+    Returns new access and refresh tokens
+    """
+    # Decode and validate refresh token
+    payload = decode_refresh_token(request.refresh_token)
+    if not payload:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired refresh token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    # Get user from token
+    user_id = payload.get("sub")
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid refresh token payload"
+        )
+
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found"
+        )
+
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User account is inactive"
+        )
+
+    # Create new access and refresh tokens
+    access_token = create_access_token(data={"sub": str(user.id)})
+    new_refresh_token = create_refresh_token(data={"sub": str(user.id)})
+
+    return {
+        "access_token": access_token,
+        "refresh_token": new_refresh_token,
+        "token_type": "bearer",
+        "user_id": str(user.id)
+    }

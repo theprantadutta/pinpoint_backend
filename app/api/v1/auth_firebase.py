@@ -12,7 +12,7 @@ from app.schemas.auth import Token
 from app.services.firebase_auth_service import verify_firebase_token, get_user_info_from_token
 from app.services.auth_service import AuthService
 from app.core.dependencies import get_current_user
-from app.core.security import verify_password
+from app.core.security import verify_password, create_refresh_token
 from app.models.user import User
 from datetime import datetime
 import logging
@@ -100,13 +100,15 @@ async def authenticate_with_firebase(
             db.refresh(user)
             logger.info(f"✅ [Firebase Auth] Created new Firebase user: {user.email}")
 
-        # Create backend JWT token
-        logger.info("🔐 [Firebase Auth] Step 4: Creating JWT token...")
+        # Create backend JWT tokens (access + refresh)
+        logger.info("🔐 [Firebase Auth] Step 4: Creating JWT tokens...")
         access_token = auth_service.create_access_token_for_user(user)
+        refresh_token = create_refresh_token(data={"sub": str(user.id)})
         logger.info(f"🎉 [Firebase Auth] Authentication successful for user: {user.email}")
 
         return {
             "access_token": access_token,
+            "refresh_token": refresh_token,
             "token_type": "bearer",
             "user_id": str(user.id)
         }

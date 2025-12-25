@@ -37,8 +37,10 @@ class SyncService:
         )
 
         # Filter by timestamp for incremental sync
+        # Note: Client sends timestamp in milliseconds, convert to seconds
         if since > 0:
-            since_datetime = datetime.utcfromtimestamp(since)
+            since_seconds = since / 1000 if since > 9999999999 else since
+            since_datetime = datetime.utcfromtimestamp(since_seconds)
             query = query.filter(EncryptedNote.updated_at > since_datetime)
 
         # Optionally exclude deleted notes

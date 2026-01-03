@@ -57,7 +57,7 @@ class PaymentService:
         """
         if not self.google_play_service:
             # For development: Mock verification
-            return await self._mock_verify_purchase(user_id, product_id)
+            return await self._mock_verify_purchase(user_id, purchase_token, product_id)
 
         try:
             # Verify with Google Play API
@@ -126,6 +126,7 @@ class PaymentService:
     async def _mock_verify_purchase(
         self,
         user_id: str,
+        purchase_token: str,
         product_id: str
     ) -> Dict:
         """
@@ -157,6 +158,7 @@ class PaymentService:
 
         user.subscription_tier = 'premium'
         user.subscription_expires_at = expiry_time
+        user.google_play_purchase_token = purchase_token  # Store token for webhook lookup
         # Clear any grace period when purchase succeeds
         user.grace_period_ends_at = None
 
@@ -164,6 +166,7 @@ class PaymentService:
         subscription_event = SubscriptionEvent(
             user_id=user_id,
             event_type='purchase',
+            purchase_token=purchase_token,
             product_id=product_id,
             platform='android',
             expires_at=expiry_time,
@@ -243,7 +246,7 @@ class PaymentService:
         """
         if not self.google_play_service:
             # For development: Mock verification
-            return await self._mock_verify_device_purchase(device_id, product_id, user_id)
+            return await self._mock_verify_device_purchase(device_id, purchase_token, product_id, user_id)
 
         try:
             # Verify with Google Play API
@@ -356,6 +359,7 @@ class PaymentService:
     async def _mock_verify_device_purchase(
         self,
         device_id: str,
+        purchase_token: str,
         product_id: str,
         user_id: Optional[str] = None
     ) -> Dict:
@@ -364,6 +368,7 @@ class PaymentService:
 
         Args:
             device_id: Device ID
+            purchase_token: Purchase token from Google Play
             product_id: Product ID
             user_id: Optional user ID to sync subscription
         """
@@ -387,17 +392,19 @@ class PaymentService:
         device.subscription_tier = 'premium'
         device.subscription_product_id = product_id
         device.subscription_expires_at = expiry_time
+        device.last_purchase_token = purchase_token  # Store token for webhook lookup
         device.purchase_verified_at = datetime.utcnow()
         device.clear_grace_period()  # Clear grace period on successful purchase
 
         # Sync with user record if user_id provided
         if user_id:
-            self._sync_subscription_to_user(user_id, product_id, expiry_time)
+            self._sync_subscription_to_user(user_id, product_id, expiry_time, purchase_token)
 
         # Log subscription event (for device purchases)
         subscription_event = SubscriptionEvent(
             user_id=user_id,  # May be None for anonymous device purchases
             event_type='purchase',
+            purchase_token=purchase_token,
             product_id=product_id,
             platform='android',
             expires_at=expiry_time,
